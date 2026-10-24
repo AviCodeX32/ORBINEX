@@ -143,12 +143,39 @@ export interface PrepChecklist {
   insider_tips: string[];
 }
 
-export interface SOPDraft {
-  opportunity_id: number;
-  subject_line: string;
-  cover_letter_body: string;
-  pitch_summary: string;
-  key_talking_points: string[];
+export interface ResumeAnalysis {
+  target_role: string;
+  combined_score: number;
+  ats_score: number;
+  found_skills: string[];
+  missing_skills: string[];
+  strengths: string[];
+  improvements: string[];
+  summary_verdict: string;
+  recommended_opportunities: Array<{
+    id: number;
+    title: string;
+    organizer: string;
+    category: string;
+    deadline: string;
+    prize_description: string;
+    direct_registration_url: string;
+  }>;
+}
+
+export interface Mentor {
+  id: number;
+  name: string;
+  role: string;
+  company: string;
+  company_logo: string;
+  avatar: string;
+  rating: number;
+  reviews_count: number;
+  experience_years: number;
+  skills: string[];
+  bio: string;
+  sessions_taken: number;
 }
 
 export interface SourceHealth {
@@ -413,5 +440,18 @@ export async function savePartnerOutreachMessage(data: any): Promise<any> {
 export async function fetchPartnerOutreachMessages(): Promise<any[]> {
   const res = await fetch(`${API_BASE_URL}/partner/outreach-messages`);
   if (!res.ok) throw new Error("Failed to fetch outreach messages");
+  return res.json();
+}
+
+export async function requestResumeAnalysis(
+  resumeText: string,
+  targetRole: string = "Fullstack SDE"
+): Promise<ResumeAnalysis> {
+  const res = await fetch(`${API_BASE_URL}/ai/resume-analyzer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ resume_text: resumeText, target_role: targetRole }),
+  });
+  if (!res.ok) throw new Error("Failed to analyze resume");
   return res.json();
 }

@@ -21,6 +21,8 @@ class UserBase(BaseModel):
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
     portfolio_url: Optional[str] = None
+    resume_url: Optional[str] = None
+    resume_text: Optional[str] = None
     notification_preferences: Dict[str, Any] = {}
 
 class UserProfileUpdate(BaseModel):
@@ -39,6 +41,8 @@ class UserProfileUpdate(BaseModel):
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
     portfolio_url: Optional[str] = None
+    resume_url: Optional[str] = None
+    resume_text: Optional[str] = None
     notification_preferences: Optional[Dict[str, Any]] = None
 
 class UserOut(UserBase):
@@ -207,6 +211,22 @@ class OutreachDraftResponse(BaseModel):
     subject: str
     body: str
     key_highlights: List[str]
+
+class ResumeAnalysisRequest(BaseModel):
+    resume_text: str
+    target_role: str = "Fullstack SDE"
+    user_id: Optional[int] = None
+
+class ResumeAnalysisResponse(BaseModel):
+    target_role: str
+    combined_score: int
+    ats_score: int
+    found_skills: List[str]
+    missing_skills: List[str]
+    strengths: List[str]
+    improvements: List[str]
+    summary_verdict: str
+    recommended_opportunities: List[Dict[str, Any]]
 
 
 # --- Admin & Partner Schemas ---

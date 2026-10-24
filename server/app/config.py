@@ -36,11 +36,12 @@ class Settings:
 
     # AI & LLM Provider
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "fallback")
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     AI_MODEL_NAME: str = os.getenv("AI_MODEL_NAME", "gemini-1.5-flash")
-    AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", "0.3"))
-    AI_TIMEOUT_SECONDS: int = int(os.getenv("AI_TIMEOUT_SECONDS", "30"))
+
+    # Supabase (Auth & Storage)
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
     # Discovery & Verification
     DISCOVERY_REFRESH_INTERVAL_MINUTES: int = int(os.getenv("DISCOVERY_REFRESH_INTERVAL_MINUTES", "60"))

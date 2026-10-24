@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { 
   KanbanSquare, 
-  ListFilter, 
   Plus, 
   CheckSquare, 
   Square, 
@@ -9,12 +8,12 @@ import {
   ExternalLink, 
   Trash2, 
   Calendar, 
-  FileText, 
-  ChevronDown, 
-  ChevronUp, 
   CheckCircle2, 
-  Sparkles,
-  Award
+  Sparkles, 
+  Award,
+  ChevronDown,
+  ChevronUp,
+  Filter
 } from "lucide-react";
 import { 
   ApplicationTracker, 
@@ -27,56 +26,50 @@ import {
 interface ApplicationTrackerViewProps {
   applications: ApplicationTracker[];
   onRefresh: () => void;
-  onOpenDetails: (opp: any) => void;
+  onSelectOpportunity: (opp: any) => void;
   onOpenAIPrep: (opp: any) => void;
 }
 
 const STAGES = [
-  { id: "SAVED", label: "Saved", color: "bg-slate-100 text-slate-700 border-slate-300", dot: "bg-slate-400" },
-  { id: "APPLIED", label: "Applied", color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500" },
-  { id: "UNDER_REVIEW", label: "Under Review", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" },
-  { id: "INTERVIEW_ROUND", label: "Interview / Round 2", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500" },
-  { id: "ACCEPTED", label: "Accepted / Won", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  { id: "REJECTED", label: "Closed", color: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-400" },
+  { id: "ALL", label: "All Applications" },
+  { id: "SAVED", label: "Saved", badge: "bg-slate-100 text-slate-700" },
+  { id: "APPLIED", label: "Applied", badge: "bg-blue-50 text-blue-700" },
+  { id: "UNDER_REVIEW", label: "Under Review", badge: "bg-amber-50 text-amber-800" },
+  { id: "INTERVIEW_ROUND", label: "Interview / Round 2", badge: "bg-purple-50 text-purple-700" },
+  { id: "ACCEPTED", label: "Accepted / Won", badge: "bg-emerald-50 text-emerald-700" },
+  { id: "REJECTED", label: "Closed", badge: "bg-rose-50 text-rose-700" },
 ];
 
 export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
   applications,
   onRefresh,
-  onOpenDetails,
+  onSelectOpportunity,
   onOpenAIPrep,
 }) => {
-  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+  const [selectedStage, setSelectedStage] = useState("ALL");
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
-  const [newTaskTitles, setNewTaskTitles] = useState<Record<number, string>>({});
-  const [loadingAction, setLoadingAction] = useState<number | null>(null);
+  const [newTaskTitle, setNewTaskTitle] = useState<Record<number, string>>({});
 
-  const toggleExpand = (appId: number) => {
-    setExpandedCards(prev => ({ ...prev, [appId]: !prev[appId] }));
+  const toggleExpand = (id: number) => {
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleStatusChange = async (appId: number, newStatus: string) => {
+  const handleStatusChange = async (appId: number, status: string) => {
     try {
-      setLoadingAction(appId);
-      await updateApplication(appId, { status: newStatus });
+      await updateApplication(appId, { status });
       onRefresh();
     } catch (err) {
-      console.error("Failed to update status", err);
-    } finally {
-      setLoadingAction(null);
+      console.error(err);
     }
   };
 
   const handleDelete = async (appId: number) => {
-    if (!confirm("Are you sure you want to remove this opportunity from your tracker?")) return;
+    if (!confirm("Remove this opportunity from your application tracker?")) return;
     try {
-      setLoadingAction(appId);
       await deleteApplication(appId);
       onRefresh();
     } catch (err) {
-      console.error("Failed to delete application", err);
-    } finally {
-      setLoadingAction(null);
+      console.error(err);
     }
   };
 
@@ -85,276 +78,230 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
       await toggleApplicationTask(taskId);
       onRefresh();
     } catch (err) {
-      console.error("Failed to toggle task", err);
+      console.error(err);
     }
   };
 
   const handleAddTask = async (appId: number, e: React.FormEvent) => {
     e.preventDefault();
-    const title = newTaskTitles[appId]?.trim();
+    const title = newTaskTitle[appId]?.trim();
     if (!title) return;
     try {
-      await addApplicationTask(appId, { title, priority: "medium" });
-      setNewTaskTitles(prev => ({ ...prev, [appId]: "" }));
+      await addApplicationTask(appId, { title });
+      setNewTaskTitle(prev => ({ ...prev, [appId]: "" }));
       onRefresh();
     } catch (err) {
-      console.error("Failed to add task", err);
+      console.error(err);
     }
   };
 
+  const filteredApps = selectedStage === "ALL"
+    ? applications
+    : applications.filter(a => a.status === selectedStage);
+
+  // Stats calculation
+  const totalCount = applications.length;
+  const inReviewCount = applications.filter(a => a.status === "UNDER_REVIEW" || a.status === "INTERVIEW_ROUND").length;
+  const appliedCount = applications.filter(a => a.status === "APPLIED").length;
+  const acceptedCount = applications.filter(a => a.status === "ACCEPTED").length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in">
       
-      {/* Top Controls Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      {/* Header & Stats Strip (Unstop My Activity style) */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
         <div>
-          <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+          <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
             <KanbanSquare className="w-5 h-5 text-blue-600" />
-            <span>Opportunity Application Pipeline</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-              {applications.length} Tracked
-            </span>
+            <span>My Application Pipeline & Milestones</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage your deadlines, prep tasks, submission links, and interview progress.
+            Track registration deadlines, round submissions, interview preparations, and outcome tasks.
           </p>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/80 self-start sm:self-auto">
-          <button
-            onClick={() => setViewMode("kanban")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-              viewMode === "kanban"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <KanbanSquare className="w-3.5 h-3.5" />
-            <span>Kanban Board</span>
-          </button>
-          <button
-            onClick={() => setViewMode("table")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-              viewMode === "table"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <ListFilter className="w-3.5 h-3.5" />
-            <span>Detailed List</span>
-          </button>
+        {/* 4 Stat Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Tracked</span>
+            <p className="text-2xl font-black text-slate-900 mt-1">{totalCount}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block">Applied</span>
+            <p className="text-2xl font-black text-blue-900 mt-1">{appliedCount}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block">In Review / Rounds</span>
+            <p className="text-2xl font-black text-amber-900 mt-1">{inReviewCount}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Finalist / Offers</span>
+            <p className="text-2xl font-black text-emerald-900 mt-1">{acceptedCount}</p>
+          </div>
         </div>
       </div>
 
-      {/* Empty State */}
-      {applications.length === 0 && (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 shadow-xs">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 border border-blue-200">
-            <KanbanSquare className="w-7 h-7" />
-          </div>
-          <h3 className="text-base font-bold text-slate-900">Your application tracker is empty</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-6">
-            Discover verified hackathons, internships, scholarships, and fellowships, then click "Track" to organize your preparation and deadlines here.
+      {/* Stage Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {STAGES.map(s => {
+          const count = s.id === "ALL" ? applications.length : applications.filter(a => a.status === s.id).length;
+          return (
+            <button
+              key={s.id}
+              onClick={() => setSelectedStage(s.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+                selectedStage === s.id
+                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                  : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              <span>{s.label}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                selectedStage === s.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Applications List */}
+      {filteredApps.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
+          <KanbanSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+          <h3 className="text-sm font-bold text-slate-800">No applications in this stage</h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Explore verified opportunities on the home page and click "Track" to start managing them here.
           </p>
         </div>
-      )}
-
-      {/* KANBAN BOARD VIEW */}
-      {viewMode === "kanban" && applications.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
-          {STAGES.map(stage => {
-            const stageApps = applications.filter(a => a.status === stage.id);
+      ) : (
+        <div className="space-y-3">
+          {filteredApps.map(app => {
+            const isExpanded = !!expandedCards[app.id];
+            const completedTasks = app.tasks.filter(t => t.is_completed).length;
+            const progressPct = app.tasks.length ? Math.round((completedTasks / app.tasks.length) * 100) : 0;
 
             return (
               <div 
-                key={stage.id} 
-                className="bg-slate-100/70 rounded-xl border border-slate-200/90 p-3 flex flex-col min-h-[450px]"
+                key={app.id} 
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-blue-400 transition-all space-y-4"
               >
-                {/* Stage Header */}
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2.5 h-2.5 rounded-full ${stage.dot}`} />
-                    <span className="text-xs font-extrabold text-slate-800 tracking-tight">
-                      {stage.label}
-                    </span>
+                {/* Top Row: Category, Title, Stage Dropdown, Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                        {app.opportunity?.category}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-400">
+                        {app.opportunity?.organizer}
+                      </span>
+                    </div>
+
+                    <h4 
+                      onClick={() => app.opportunity && onSelectOpportunity(app.opportunity)}
+                      className="text-base font-extrabold text-slate-900 hover:text-blue-600 cursor-pointer transition-colors"
+                    >
+                      {app.opportunity?.title}
+                    </h4>
                   </div>
-                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200">
-                    {stageApps.length}
-                  </span>
+
+                  {/* Stage Dropdown & Actions */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <select
+                      value={app.status}
+                      onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                      className="text-xs font-extrabold bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 outline-none focus:border-blue-500"
+                    >
+                      {STAGES.filter(s => s.id !== "ALL").map(s => (
+                        <option key={s.id} value={s.id}>{s.label}</option>
+                      ))}
+                    </select>
+
+                    {app.opportunity?.direct_registration_url && (
+                      <a
+                        href={app.opportunity.direct_registration_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors"
+                        title="Open Official Portal"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+
+                    <button
+                      onClick={() => handleDelete(app.id)}
+                      className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                      title="Remove from tracker"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Applications list in stage */}
-                <div className="space-y-3 flex-1">
-                  {stageApps.map(app => {
-                    const isExpanded = !!expandedCards[app.id];
-                    const completedTasks = app.tasks.filter(t => t.is_completed).length;
+                {/* Progress bar & Task expander */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                      <span>Milestones Progress ({completedTasks}/{app.tasks.length} Completed)</span>
+                    </span>
+                    <button
+                      onClick={() => toggleExpand(app.id)}
+                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      <span>{isExpanded ? "Hide Tasks" : "View Checklist"}</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
 
-                    return (
-                      <div 
-                        key={app.id}
-                        className="bg-white rounded-xl border border-slate-200 shadow-2xs hover:shadow-md transition-all p-3 text-xs flex flex-col justify-between"
-                      >
-                        {/* Card Header: Category & Move status */}
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                            {app.opportunity?.category || "Opportunity"}
-                          </span>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-blue-600 h-full rounded-full transition-all"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
 
-                          <select
-                            value={app.status}
-                            onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                            disabled={loadingAction === app.id}
-                            className="text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 outline-none hover:bg-slate-100 cursor-pointer"
+                  {/* Expanded Checklist */}
+                  {isExpanded && (
+                    <div className="space-y-2 pt-2 border-t border-slate-200 animate-in fade-in text-xs">
+                      <div className="space-y-1.5">
+                        {app.tasks.map(task => (
+                          <div
+                            key={task.id}
+                            onClick={() => handleToggleTask(task.id)}
+                            className="flex items-start gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer group"
                           >
-                            {STAGES.map(s => (
-                              <option key={s.id} value={s.id}>
-                                {s.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Title */}
-                        <h4 
-                          onClick={() => app.opportunity && onOpenDetails(app.opportunity)}
-                          className="font-bold text-slate-900 line-clamp-2 hover:text-blue-600 cursor-pointer leading-snug mb-1"
-                        >
-                          {app.opportunity?.title || "Tracked Opportunity"}
-                        </h4>
-
-                        <p className="text-[11px] text-slate-500 font-medium truncate mb-2">
-                          {app.opportunity?.organizer}
-                        </p>
-
-                        {/* Prize & Deadline tags */}
-                        <div className="space-y-1 mb-2.5 pt-2 border-t border-slate-100 text-[11px]">
-                          <div className="flex items-center justify-between text-slate-600">
-                            <span className="flex items-center gap-1 text-slate-400 text-[10px]">
-                              <Award className="w-3 h-3 text-amber-500" />
-                              Prizes
-                            </span>
-                            <span className="font-bold text-slate-800 truncate max-w-[110px]">
-                              {app.opportunity?.prize_description}
-                            </span>
-                          </div>
-
-                          {app.deadline && (
-                            <div className="flex items-center justify-between text-slate-600">
-                              <span className="flex items-center gap-1 text-slate-400 text-[10px]">
-                                <Clock className="w-3 h-3 text-blue-500" />
-                                Deadline
-                              </span>
-                              <span className="font-semibold text-slate-700">
-                                {new Date(app.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Notes preview if present */}
-                        {app.notes && (
-                          <div className="p-2 rounded bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 mb-2.5 line-clamp-2">
-                            <span className="font-bold">Note:</span> {app.notes}
-                          </div>
-                        )}
-
-                        {/* Tasks Summary & Expand Toggle */}
-                        <div className="pt-2 border-t border-slate-100">
-                          <button
-                            onClick={() => toggleExpand(app.id)}
-                            className="w-full flex items-center justify-between text-[11px] font-semibold text-slate-600 hover:text-blue-600 py-0.5"
-                          >
-                            <span className="flex items-center gap-1">
-                              <CheckSquare className="w-3.5 h-3.5 text-blue-500" />
-                              <span>Checklist ({completedTasks}/{app.tasks.length})</span>
-                            </span>
-                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                          </button>
-
-                          {/* Expanded Task Checklist */}
-                          {isExpanded && (
-                            <div className="mt-2 space-y-2 pt-2 border-t border-slate-100 animate-in fade-in">
-                              <div className="space-y-1.5">
-                                {app.tasks.map(task => (
-                                  <div
-                                    key={task.id}
-                                    onClick={() => handleToggleTask(task.id)}
-                                    className="flex items-start gap-1.5 cursor-pointer text-[11px] group p-1 rounded hover:bg-slate-50"
-                                  >
-                                    {task.is_completed ? (
-                                      <CheckSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                                    ) : (
-                                      <Square className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 shrink-0 mt-0.5" />
-                                    )}
-                                    <span className={`flex-1 leading-tight ${
-                                      task.is_completed ? "line-through text-slate-400" : "text-slate-700"
-                                    }`}>
-                                      {task.title}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-
-                              {/* Add Quick Task Input */}
-                              <form onSubmit={(e) => handleAddTask(app.id, e)} className="flex items-center gap-1 mt-1">
-                                <input
-                                  type="text"
-                                  placeholder="Add checklist item..."
-                                  value={newTaskTitles[app.id] || ""}
-                                  onChange={(e) => setNewTaskTitles(prev => ({ ...prev, [app.id]: e.target.value }))}
-                                  className="w-full px-2 py-1 text-[11px] border border-slate-200 rounded bg-slate-50 focus:bg-white focus:border-blue-500 outline-none"
-                                />
-                                <button
-                                  type="submit"
-                                  className="p-1 rounded bg-blue-600 text-white hover:bg-blue-700 shrink-0"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </form>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                          <button
-                            onClick={() => app.opportunity && onOpenAIPrep(app.opportunity)}
-                            className="inline-flex items-center gap-1 text-slate-600 hover:text-blue-600 font-semibold"
-                          >
-                            <Sparkles className="w-3 h-3 text-amber-500" />
-                            <span>Prep</span>
-                          </button>
-
-                          <div className="flex items-center gap-1">
-                            {app.opportunity?.direct_registration_url && (
-                              <a
-                                href={app.opportunity.direct_registration_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1 text-slate-400 hover:text-blue-600 rounded hover:bg-slate-100"
-                                title="Open Official Portal"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
+                            {task.is_completed ? (
+                              <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            ) : (
+                              <Square className="w-4 h-4 text-slate-400 group-hover:text-blue-500 shrink-0 mt-0.5" />
                             )}
-                            <button
-                              onClick={() => handleDelete(app.id)}
-                              className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-slate-100"
-                              title="Delete from tracker"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <span className={task.is_completed ? "line-through text-slate-400" : "text-slate-800 font-medium"}>
+                              {task.title}
+                            </span>
                           </div>
-                        </div>
-
+                        ))}
                       </div>
-                    );
-                  })}
 
-                  {stageApps.length === 0 && (
-                    <div className="text-center py-8 text-slate-400 text-[11px] border-2 border-dashed border-slate-200 rounded-xl">
-                      No applications in this stage
+                      {/* Add quick task */}
+                      <form onSubmit={(e) => handleAddTask(app.id, e)} className="flex items-center gap-1 pt-1">
+                        <input
+                          type="text"
+                          placeholder="Add new preparation task (e.g. submit deck)..."
+                          value={newTaskTitle[app.id] || ""}
+                          onChange={(e) => setNewTaskTitle(prev => ({ ...prev, [app.id]: e.target.value }))}
+                          className="flex-1 p-1.5 px-3 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-blue-500"
+                        />
+                        <button
+                          type="submit"
+                          className="p-1.5 px-3 bg-blue-600 text-white rounded-lg font-bold text-xs hover:bg-blue-700"
+                        >
+                          Add
+                        </button>
+                      </form>
                     </div>
                   )}
                 </div>
@@ -365,117 +312,6 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
         </div>
       )}
 
-      {/* DETAILED LIST / TABLE VIEW */}
-      {viewMode === "table" && applications.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-4">Opportunity</th>
-                  <th className="py-3 px-4">Organizer</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Prizes</th>
-                  <th className="py-3 px-4">Deadline</th>
-                  <th className="py-3 px-4">Checklist Progress</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {applications.map(app => {
-                  const completedTasks = app.tasks.filter(t => t.is_completed).length;
-
-                  return (
-                    <tr key={app.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4">
-                        <span 
-                          onClick={() => app.opportunity && onOpenDetails(app.opportunity)}
-                          className="font-bold text-slate-900 hover:text-blue-600 cursor-pointer"
-                        >
-                          {app.opportunity?.title}
-                        </span>
-                        <div className="text-[10px] text-slate-400 uppercase font-semibold mt-0.5">
-                          {app.opportunity?.category} • {app.opportunity?.mode}
-                        </div>
-                      </td>
-
-                      <td className="py-3 px-4 font-medium text-slate-600">
-                        {app.opportunity?.organizer}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        <select
-                          value={app.status}
-                          onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                          className="text-xs font-semibold bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-slate-800 outline-none"
-                        >
-                          {STAGES.map(s => (
-                            <option key={s.id} value={s.id}>{s.label}</option>
-                          ))}
-                        </select>
-                      </td>
-
-                      <td className="py-3 px-4 font-bold text-slate-800">
-                        {app.opportunity?.prize_description}
-                      </td>
-
-                      <td className="py-3 px-4 font-semibold text-slate-600">
-                        {app.deadline ? new Date(app.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "N/A"}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div 
-                              className="bg-blue-600 h-full rounded-full transition-all"
-                              style={{ width: `${app.tasks.length ? (completedTasks / app.tasks.length) * 100 : 0}%` }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-slate-500 font-medium">
-                            {completedTasks}/{app.tasks.length}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => app.opportunity && onOpenAIPrep(app.opportunity)}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:border-blue-400 text-slate-600 hover:text-blue-600 transition-colors"
-                            title="AI Preparation Playbook"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                          </button>
-                          {app.opportunity?.direct_registration_url && (
-                            <a
-                              href={app.opportunity.direct_registration_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1.5 rounded-lg border border-slate-200 hover:border-blue-400 text-slate-600 hover:text-blue-600 transition-colors"
-                              title="Open Portal"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          )}
-                          <button
-                            onClick={() => handleDelete(app.id)}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:border-rose-400 text-slate-600 hover:text-rose-600 transition-colors"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
-

@@ -6,7 +6,8 @@ from app.schemas import (
     MatchAnalysisRequest, MatchAnalysisResponse,
     PrepChecklistRequest, PrepChecklistResponse,
     SOPDraftRequest, SOPDraftResponse,
-    OutreachDraftRequest, OutreachDraftResponse
+    OutreachDraftRequest, OutreachDraftResponse,
+    ResumeAnalysisRequest, ResumeAnalysisResponse
 )
 from app.api.deps import get_current_user
 from app.services.recommender import recommender_engine
@@ -119,3 +120,19 @@ def draft_partner_outreach(
         opp_title=opp_title
     )
     return OutreachDraftResponse(**res)
+
+
+@router.post("/resume-analyzer", response_model=ResumeAnalysisResponse)
+def analyze_student_resume(
+    req: ResumeAnalysisRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # Save parsed text to user model if provided
+    if req.resume_text:
+        current_user.resume_text = req.resume_text
+        db.commit()
+
+    active_opps = db.query(Opportunity).filter(Opportunity.is_active == True, Opportunity.is_duplicate == False).limit(6).all()
+    analysis = ai_assistant.analyze_resume(req.resume_text, req.target_role, active_opps)
+    return ResumeAnalysisResponse(**analysis)

@@ -28,10 +28,12 @@ class User(Base):
     target_types = Column(JSON, default=lambda: ["hackathon", "internship", "fellowship", "scholarship"])
     location_preference = Column(String(100), default="Hybrid / Remote")
 
-    # Socials
+    # Socials & Resume
     github_url = Column(String(255), default="https://github.com")
     linkedin_url = Column(String(255), default="https://linkedin.com")
     portfolio_url = Column(String(255), default="https://portfolio.dev")
+    resume_url = Column(String(500), nullable=True)
+    resume_text = Column(Text, nullable=True)
 
     # Notifications
     notification_preferences = Column(JSON, default=lambda: {
