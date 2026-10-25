@@ -219,3 +219,47 @@ def track_click(id: int, db: Session = Depends(get_db)):
         opp.clicks_count += 1
         db.commit()
     return {"status": "ok", "clicks": opp.clicks_count if opp else 0}
+
+
+@router.post("/discovery/trigger")
+def trigger_discovery_agent(
+    max_queries: int = Query(4, ge=1, le=10),
+    db: Session = Depends(get_db)
+):
+    """
+    Triggers an immediate autonomous AI discovery, extraction, verification,
+    and deduplication cycle across web sources.
+    """
+    from app.services.discovery.pipeline import discovery_agent
+    results = discovery_agent.run_discovery(db=db, max_queries=max_queries)
+    return results
+
+
+@router.get("/discovery/status")
+def get_discovery_status(db: Session = Depends(get_db)):
+    """
+    Returns the autonomous background discovery scheduler status,
+    last run metrics, and source health records.
+    """
+    from app.services.discovery.scheduler import discovery_scheduler
+    from app.models import SourceHealth
+
+    sources = db.query(SourceHealth).all()
+    source_stats = [
+        {
+            "id": s.id,
+            "source_name": s.source_name,
+            "connector_type": s.connector_type,
+            "status": s.status,
+            "latency_ms": s.latency_ms,
+            "items_discovered": s.items_discovered,
+            "last_synced_at": s.last_synced_at.isoformat() if s.last_synced_at else None
+        }
+        for s in sources
+    ]
+
+    return {
+        "scheduler": discovery_scheduler.get_status(),
+        "sources": source_stats
+    }
+

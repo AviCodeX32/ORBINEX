@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
 from app.seed import seed_database
+from app.services.discovery.scheduler import discovery_scheduler
 
 from app.api import opportunities, tracker, ai, admin, partner, user
 
@@ -12,7 +13,15 @@ async def lifespan(app: FastAPI):
     # Initialize database tables and seed sample data
     Base.metadata.create_all(bind=engine)
     seed_database()
+
+    # Start autonomous background discovery scheduler
+    if settings.DISCOVERY_AUTO_START:
+        discovery_scheduler.start()
+
     yield
+
+    # Graceful shutdown of background workers
+    discovery_scheduler.stop()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -48,6 +57,8 @@ def health_check():
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
         "ai_provider": settings.AI_PROVIDER,
+        "ai_model": settings.AI_MODEL_NAME,
+        "discovery_scheduler": discovery_scheduler.get_status(),
         "database": "connected"
     }
 

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="28" fill="#2874F0"/>
+  <!-- Yellow bag shape -->
+  <path d="M42 42 h44 v56 a10 10 0 0 1 -10 10 h-24 a10 10 0 0 1 -10 -10 Z" fill="#FFE500"/>
+  <!-- Bag handle -->
+  <path d="M52 42 v-8 a12 12 0 0 1 24 0 v8" stroke="#FFE500" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- Flipkart 'f' symbol -->
+  <path d="M60 52 h12 c3 0 5 2 5 5 v2 h-10 v8 h9 v6 h-9 v22 h-7 Z" fill="#2874F0"/>
+</svg>

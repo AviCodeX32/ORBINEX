@@ -4,7 +4,8 @@ import {
   MapPin, 
   Bookmark, 
   CheckCircle2, 
-  ArrowUpRight 
+  ArrowUpRight,
+  Briefcase
 } from "lucide-react";
 import { Opportunity } from "@/lib/api";
 
@@ -29,8 +30,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   const isExpiringSoon = diffDays > 0 && diffDays <= 7;
   const isExpired = diffDays <= 0;
 
-  // Clean category label mapping (neutral palette - no rainbow colors)
+  // Clean category label mapping
   const categoryLabels: Record<string, string> = {
+    job: "Full-Time Job",
     hackathon: "Hackathon",
     internship: "Internship",
     scholarship: "Scholarship",
@@ -40,6 +42,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
   const categoryLabel = categoryLabels[opportunity.category] || "Opportunity";
   const isVerified = opportunity.verification_status === "VERIFIED_OFFICIAL";
+  const isJob = opportunity.category === "job";
 
   // Initials for organizer avatar
   const organizerInitials = opportunity.organizer
@@ -125,11 +128,11 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
       </div>
 
-      {/* Bottom Section: Prize & Deadline Footer */}
+      {/* Bottom Section: Compensation/Prize & Deadline Footer */}
       <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Prize / Stipend
+            {isJob ? "CTC / Annual Package" : "Prize / Stipend"}
           </span>
           <span className="font-extrabold text-slate-900 truncate max-w-[150px] block mt-0.5">
             {opportunity.prize_description}

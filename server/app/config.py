@@ -34,22 +34,27 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'orbinex.db'}")
     DB_ECHO: bool = os.getenv("DB_ECHO", "False").lower() in ("true", "1", "yes")
 
-    # AI & LLM Provider
-    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "fallback")
+    # AI & LLM Provider (Google Gemini)
+    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    AI_MODEL_NAME: str = os.getenv("AI_MODEL_NAME", "gemini-1.5-flash")
+    AI_MODEL_NAME: str = os.getenv("AI_MODEL_NAME", "gemini-3.5-flash-lite")
+
+    # Web Search Providers (Tavily / Brave Search)
+    TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
+    BRAVE_API_KEY: str = os.getenv("BRAVE_API_KEY", "")
 
     # Supabase (Auth & Storage)
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
-    # Discovery & Verification
-    DISCOVERY_REFRESH_INTERVAL_MINUTES: int = int(os.getenv("DISCOVERY_REFRESH_INTERVAL_MINUTES", "60"))
-    DISCOVERY_MAX_PER_SOURCE: int = int(os.getenv("DISCOVERY_MAX_PER_SOURCE", "50"))
+    # Discovery & Verification Engine
+    DISCOVERY_AUTO_START: bool = os.getenv("DISCOVERY_AUTO_START", "True").lower() in ("true", "1", "yes")
+    DISCOVERY_INTERVAL_MINUTES: int = int(os.getenv("DISCOVERY_INTERVAL_MINUTES", "60"))
+    DISCOVERY_MAX_PER_SOURCE: int = int(os.getenv("DISCOVERY_MAX_PER_SOURCE", "15"))
     USER_AGENT_HEADER: str = os.getenv("USER_AGENT_HEADER", "ORBINEX-Bot/1.0 (+https://orbinex.ai/bot-info)")
-    HTTP_REQUEST_TIMEOUT: int = int(os.getenv("HTTP_REQUEST_TIMEOUT", "15"))
+    HTTP_REQUEST_TIMEOUT: int = int(os.getenv("HTTP_REQUEST_TIMEOUT", "12"))
 
-    VERIFICATION_MIN_TRUST_SCORE: int = int(os.getenv("VERIFICATION_MIN_TRUST_SCORE", "75"))
-    DEDUPLICATION_SIMILARITY_THRESHOLD: float = float(os.getenv("DEDUPLICATION_SIMILARITY_THRESHOLD", "0.82"))
+    VERIFICATION_MIN_TRUST_SCORE: int = int(os.getenv("VERIFICATION_MIN_TRUST_SCORE", "70"))
+    DEDUPLICATION_SIMILARITY_THRESHOLD: float = float(os.getenv("DEDUPLICATION_SIMILARITY_THRESHOLD", "0.75"))
 
 settings = Settings()

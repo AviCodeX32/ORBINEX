@@ -74,6 +74,7 @@ export default function App() {
   const categories = [
     { id: "all", label: "All Opportunities" },
     { id: "hackathon", label: "Hackathons" },
+    { id: "job", label: "Full-Time Jobs" },
     { id: "internship", label: "Internships" },
     { id: "scholarship", label: "Scholarships" },
     { id: "fellowship", label: "Fellowships" },
@@ -204,7 +205,7 @@ export default function App() {
             setSelectedCategory("scholarship");
             setActiveTab("home");
           } else if (tab === "jobs") {
-            setSelectedCategory("internship");
+            setSelectedCategory("job");
             setActiveTab("home");
           } else {
             setActiveTab(tab);

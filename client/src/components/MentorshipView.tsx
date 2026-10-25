@@ -82,7 +82,7 @@ export const MentorshipView: React.FC = () => {
       name: "Sneha Mukherjee",
       role: "Staff Engineer (Search & Recommendations)",
       company: "Flipkart",
-      company_logo: "https://img.icons8.com/color/512/flipkart.png",
+      company_logo: "/logos/flipkart.svg",
       avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
       rating: 4.9,
       reviews_count: 85,
@@ -108,35 +108,33 @@ export const MentorshipView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in">
+    <div className="space-y-6 animate-in fade-in select-none">
       
-      {/* Unstop Inspired Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 rounded-3xl p-6 sm:p-10 text-white shadow-md">
-        <div className="max-w-2xl relative z-10 space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-xs font-bold tracking-wide backdrop-blur-md">
-            <Users className="w-3.5 h-3.5 text-amber-300" />
-            <span>1-ON-1 ONLINE MENTORSHIP</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-            1-on-1 Online Mentorship in India
+      {/* Clean Header (Removed bright blue banner as requested) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            1-on-1 Mentorship & Mock Interviews
           </h1>
-
-          <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
-            Get personalized guidance, resume audits, and hackathon project strategies from expert engineers and judges at top tier tech companies.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Personalized guidance, resume audits, and hackathon strategies directly from verified engineers at top tech companies.
           </p>
+        </div>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold self-start sm:self-auto border border-slate-200">
+          <Users className="w-3.5 h-3.5 text-blue-600" />
+          <span>Verified Industry Mentors</span>
         </div>
       </div>
 
-      {/* Category Pills Bar (Unstop screenshot #2) */}
+      {/* Category Pills Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {categories.map(cat => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all border ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all border cursor-pointer ${
               selectedCategory === cat.id
-                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                ? "bg-slate-900 text-white border-slate-900 shadow-xs"
                 : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
             }`}
           >
@@ -147,7 +145,7 @@ export const MentorshipView: React.FC = () => {
 
       {/* Mentors from Top Companies Grid */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-        <h3 className="text-base font-extrabold text-slate-900 mb-1">
+        <h3 className="text-sm font-extrabold text-slate-900 mb-1">
           Mentors from Top Companies
         </h3>
         <p className="text-xs text-slate-500 mb-4">
@@ -160,7 +158,7 @@ export const MentorshipView: React.FC = () => {
             { name: "Amazon", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" },
             { name: "Microsoft", logo: "https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg" },
             { name: "IBM", logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" },
-            { name: "Flipkart", logo: "https://img.icons8.com/color/512/flipkart.png" }
+            { name: "Flipkart", logo: "/logos/flipkart.svg" }
           ].map(comp => (
             <div key={comp.name} className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col items-center justify-center text-center">
               <img src={comp.logo} alt={comp.name} className="h-6 object-contain mb-2" />
@@ -173,7 +171,7 @@ export const MentorshipView: React.FC = () => {
       {/* Top Mentors Directory */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-extrabold text-slate-900">
+          <h3 className="text-sm font-extrabold text-slate-900">
             Top Rated Mentors Available This Week
           </h3>
           <span className="text-xs text-slate-500 font-semibold">{filteredMentors.length} Verified Mentors</span>
@@ -181,55 +179,56 @@ export const MentorshipView: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredMentors.map(mentor => (
-            <div key={mentor.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between hover:border-blue-400 transition-all">
+            <div key={mentor.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between hover:border-slate-400 transition-all">
               <div>
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex items-center gap-3">
-                    <img src={mentor.avatar} alt={mentor.name} className="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-xs" />
+                    <img src={mentor.avatar} alt={mentor.name} className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 shadow-xs" />
                     <div>
                       <div className="flex items-center gap-1.5">
                         <h4 className="text-sm font-extrabold text-slate-900">{mentor.name}</h4>
                         <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                       </div>
                       <p className="text-xs font-semibold text-slate-600">{mentor.role}</p>
-                      <div className="flex items-center gap-1 text-slate-400 text-[11px] mt-0.5">
+                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mt-0.5">
                         <img src={mentor.company_logo} alt={mentor.company} className="h-3.5 object-contain" />
                         <span>• {mentor.experience_years} yrs exp</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 text-xs font-black text-amber-900 shrink-0">
-                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  <div className="flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md text-xs font-black">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     <span>{mentor.rating}</span>
-                    <span className="text-[10px] text-amber-700 font-normal">({mentor.reviews_count})</span>
+                    <span className="text-amber-600 text-[10px]">({mentor.reviews_count})</span>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
                   {mentor.bio}
                 </p>
 
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {mentor.skills.map((s, idx) => (
-                    <span key={idx} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
-                      {s}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {mentor.skills.map((skill: string) => (
+                    <span key={skill} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-semibold">
+                      {skill}
                     </span>
                   ))}
                 </div>
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Next: {mentor.next_slot}</span>
-                </span>
+                <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Next: <strong className="text-slate-800">{mentor.next_slot}</strong></span>
+                </div>
 
                 <button
                   onClick={() => setSelectedMentor(mentor)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  Book 1-on-1 Session
+                  <span>Book Session</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -237,13 +236,13 @@ export const MentorshipView: React.FC = () => {
         </div>
       </div>
 
-      {/* Booking Session Modal */}
+      {/* Booking Modal */}
       {selectedMentor && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 p-6 shadow-2xl relative animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-xs">
             <button
               onClick={() => setSelectedMentor(null)}
-              className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+              className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -251,42 +250,55 @@ export const MentorshipView: React.FC = () => {
             {bookingSuccess ? (
               <div className="text-center py-8 space-y-3">
                 <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-7 h-7" />
+                  <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-black text-slate-900">Mentorship Session Confirmed!</h3>
-                <p className="text-xs text-slate-500">
-                  Google Meet link and calendar invitation sent for {selectedMentor.next_slot}.
+                <h3 className="text-base font-extrabold text-slate-900">Session Confirmed!</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Google Meet link and preparation checklist sent to your registered email for your session with {selectedMentor.name}.
                 </p>
               </div>
             ) : (
-              <div className="space-y-4 text-xs">
-                <div className="flex items-center gap-3">
-                  <img src={selectedMentor.avatar} alt={selectedMentor.name} className="w-12 h-12 rounded-full object-cover border-2 border-blue-500" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                  <img src={selectedMentor.avatar} alt={selectedMentor.name} className="w-12 h-12 rounded-full object-cover" />
                   <div>
-                    <h3 className="text-sm font-black text-slate-900">{selectedMentor.name}</h3>
-                    <p className="text-slate-500 font-semibold">{selectedMentor.role} at {selectedMentor.company}</p>
+                    <h3 className="text-sm font-black text-slate-900">Book Mentorship with {selectedMentor.name}</h3>
+                    <p className="text-xs text-slate-500">{selectedMentor.role} at {selectedMentor.company}</p>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Session Type</span>
-                  <span className="font-bold text-slate-800 text-xs">1-on-1 Strategy & Code / CV Review (45 Mins)</span>
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-700 block">Select Session Topic</label>
+                  <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold outline-none focus:border-blue-500 text-xs">
+                    <option>Technical Resume & GitHub Review (30 mins)</option>
+                    <option>Mock Coding & System Design Interview (45 mins)</option>
+                    <option>Hackathon Idea Validation & Tech Stack Choice (30 mins)</option>
+                    <option>Placement & Off-Campus Hiring Strategy (45 mins)</option>
+                  </select>
                 </div>
 
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Your Problem Statement / Goals</label>
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-700 block">Available Slot</label>
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 font-bold flex items-center justify-between">
+                    <span>{selectedMentor.next_slot}</span>
+                    <span className="text-[11px] text-blue-700 font-semibold">100% Free for Students</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-700 block">Notes or Specific Questions (Optional)</label>
                   <textarea
                     rows={3}
-                    placeholder="e.g. Reviewing my Smart India Hackathon solution architecture deck and resume..."
-                    className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-blue-500 text-xs"
+                    placeholder="E.g., I'm preparing for upcoming SDE interviews / SIH hardware round..."
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium outline-none focus:border-blue-500 text-xs"
                   />
                 </div>
 
                 <button
                   onClick={handleBookSession}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-md transition-colors"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-md transition-all cursor-pointer mt-2"
                 >
-                  Confirm Free Student Mentorship Call
+                  Confirm Free Mentorship Slot
                 </button>
               </div>
             )}

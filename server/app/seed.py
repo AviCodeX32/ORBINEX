@@ -9,130 +9,128 @@ def seed_database():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
-    # Check if already seeded
-    if db.query(Opportunity).count() > 0:
-        db.close()
-        return
+    print("Seeding/Verifying ORBINEX initial intelligence dataset...")
 
-    print("Seeding ORBINEX initial intelligence dataset...")
-
-    # 1. Seed Default Student User
-    user = User(
-        id=1,
-        email="aarav.sharma@orbinex.ai",
-        full_name="Aarav Sharma",
-        role="student",
-        avatar_url="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        bio="Final year CSE undergrad passionate about Distributed Systems, Fullstack & Generative AI. 2x Hackathon finalist.",
-        education_level="Undergraduate",
-        university="Indian Institute of Technology (IIT) Delhi",
-        degree="B.Tech Computer Science & Engineering",
-        graduation_year=2026,
-        cgpa=9.15,
-        skills=["Python", "FastAPI", "React", "TypeScript", "Machine Learning", "PyTorch", "Docker", "Next.js", "PostgreSQL"],
-        interests=["AI/ML", "Web Development", "Hackathons", "Open Source", "FinTech", "Cloud Systems"],
-        target_types=["hackathon", "internship", "fellowship", "scholarship"],
-        location_preference="Hybrid / Remote",
-        github_url="https://github.com/aarav-sharma-dev",
-        linkedin_url="https://linkedin.com/in/aaravsharma-tech",
-        portfolio_url="https://aaravsharma.dev",
-        notification_preferences={
-            "email_alerts": True,
-            "deadline_reminders": True,
-            "daily_digest": False,
-            "verified_only": True
-        }
-    )
-    db.add(user)
-    db.commit()
+    # 1. Seed Default Student User if not exists
+    if db.query(User).filter(User.id == 1).first() is None:
+        user = User(
+            id=1,
+            email="aarav.sharma@orbinex.ai",
+            full_name="Aarav Sharma",
+            role="student",
+            avatar_url="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+            bio="Final year CSE undergrad passionate about Distributed Systems, Fullstack & Generative AI. 2x Hackathon finalist.",
+            education_level="Undergraduate",
+            university="Indian Institute of Technology (IIT) Delhi",
+            degree="B.Tech Computer Science & Engineering",
+            graduation_year=2026,
+            cgpa=9.15,
+            skills=["Python", "FastAPI", "React", "TypeScript", "Machine Learning", "PyTorch", "Docker", "Next.js", "PostgreSQL"],
+            interests=["AI/ML", "Web Development", "Hackathons", "Open Source", "FinTech", "Cloud Systems"],
+            target_types=["hackathon", "internship", "fellowship", "scholarship"],
+            location_preference="Hybrid / Remote",
+            github_url="https://github.com/aarav-sharma-dev",
+            linkedin_url="https://linkedin.com/in/aaravsharma-tech",
+            portfolio_url="https://aaravsharma.dev",
+            notification_preferences={
+                "email_alerts": True,
+                "deadline_reminders": True,
+                "daily_digest": False,
+                "verified_only": True
+            }
+        )
+        db.add(user)
+        db.commit()
 
     # 2. Seed Partner Organizations
-    partners = [
-        PartnerOrganization(
-            name="Devfolio Ecosystem",
-            domain="devfolio.co",
-            logo_url="https://assets.devfolio.co/content/b5952d431c194beeb6110f0f354fcfb7/713f0ce9-6888-466f-85ff-1f543166d3a8.png",
-            tier="verified_partner",
-            is_verified=True,
-            contact_email="partnerships@devfolio.co",
-            website_url="https://devfolio.co",
-            opportunities_count=4
-        ),
-        PartnerOrganization(
-            name="AICTE Innovation Cell",
-            domain="aicte-india.org",
-            logo_url="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/All_India_Council_for_Technical_Education_logo.png/220px-All_India_Council_for_Technical_Education_logo.png",
-            tier="university_partner",
-            is_verified=True,
-            contact_email="mic-support@aicte-india.org",
-            website_url="https://mic.gov.in",
-            opportunities_count=2
-        ),
-        PartnerOrganization(
-            name="Flipkart Talent & Engineering",
-            domain="flipkart.com",
-            logo_url="https://img.icons8.com/color/512/flipkart.png",
-            tier="verified_partner",
-            is_verified=True,
-            contact_email="campus@flipkart.com",
-            website_url="https://flipkartcareers.com",
-            opportunities_count=2
-        ),
-        PartnerOrganization(
-            name="Google Open Source",
-            domain="google.com",
-            logo_url="https://www.gstatic.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png",
-            tier="verified_partner",
-            is_verified=True,
-            contact_email="gsoc-support@google.com",
-            website_url="https://summerofcode.withgoogle.com",
-            opportunities_count=1
-        )
-    ]
-    db.add_all(partners)
-    db.commit()
+    if db.query(PartnerOrganization).count() == 0:
+        partners = [
+            PartnerOrganization(
+                name="Devfolio Ecosystem",
+                domain="devfolio.co",
+                logo_url="https://assets.devfolio.co/content/b5952d431c194beeb6110f0f354fcfb7/713f0ce9-6888-466f-85ff-1f543166d3a8.png",
+                tier="verified_partner",
+                is_verified=True,
+                contact_email="partnerships@devfolio.co",
+                website_url="https://devfolio.co",
+                opportunities_count=4
+            ),
+            PartnerOrganization(
+                name="AICTE Innovation Cell",
+                domain="aicte-india.org",
+                logo_url="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/All_India_Council_for_Technical_Education_logo.png/220px-All_India_Council_for_Technical_Education_logo.png",
+                tier="university_partner",
+                is_verified=True,
+                contact_email="mic-support@aicte-india.org",
+                website_url="https://mic.gov.in",
+                opportunities_count=2
+            ),
+            PartnerOrganization(
+                name="Flipkart Talent & Engineering",
+                domain="flipkart.com",
+                logo_url="/logos/flipkart.svg",
+                tier="verified_partner",
+                is_verified=True,
+                contact_email="campus@flipkart.com",
+                website_url="https://flipkartcareers.com",
+                opportunities_count=2
+            ),
+            PartnerOrganization(
+                name="Google Open Source",
+                domain="google.com",
+                logo_url="https://www.gstatic.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png",
+                tier="verified_partner",
+                is_verified=True,
+                contact_email="gsoc-support@google.com",
+                website_url="https://summerofcode.withgoogle.com",
+                opportunities_count=1
+            )
+        ]
+        db.add_all(partners)
+        db.commit()
 
     # 3. Seed Source Health
-    sources = [
-        SourceHealth(
-            source_name="Devfolio Official Public API",
-            connector_type="API",
-            target_url="https://api.devfolio.co/v2/hackathons",
-            status="healthy",
-            latency_ms=124,
-            items_discovered=48,
-            freshness_score=99
-        ),
-        SourceHealth(
-            source_name="Unstop Partner Feed Connector",
-            connector_type="RSS_FEED",
-            target_url="https://unstop.com/api/public/competitions",
-            status="healthy",
-            latency_ms=210,
-            items_discovered=72,
-            freshness_score=96
-        ),
-        SourceHealth(
-            source_name="Smart India Hackathon AICTE Portal",
-            connector_type="HTML_PARSER",
-            target_url="https://sih.gov.in",
-            status="healthy",
-            latency_ms=315,
-            items_discovered=12,
-            freshness_score=94
-        ),
-        SourceHealth(
-            source_name="Devpost Hackathons Crawler",
-            connector_type="API",
-            target_url="https://devpost.com/api/hackathons",
-            status="healthy",
-            latency_ms=189,
-            items_discovered=35,
-            freshness_score=97
-        )
-    ]
-    db.add_all(sources)
-    db.commit()
+    if db.query(SourceHealth).count() == 0:
+        sources = [
+            SourceHealth(
+                source_name="Devfolio Official Public API",
+                connector_type="API",
+                target_url="https://api.devfolio.co/v2/hackathons",
+                status="healthy",
+                latency_ms=124,
+                items_discovered=48,
+                freshness_score=99
+            ),
+            SourceHealth(
+                source_name="Unstop Partner Feed Connector",
+                connector_type="RSS_FEED",
+                target_url="https://unstop.com/api/public/competitions",
+                status="healthy",
+                latency_ms=210,
+                items_discovered=72,
+                freshness_score=96
+            ),
+            SourceHealth(
+                source_name="Smart India Hackathon AICTE Portal",
+                connector_type="HTML_PARSER",
+                target_url="https://sih.gov.in",
+                status="healthy",
+                latency_ms=315,
+                items_discovered=12,
+                freshness_score=94
+            ),
+            SourceHealth(
+                source_name="Devpost Hackathons Crawler",
+                connector_type="API",
+                target_url="https://devpost.com/api/hackathons",
+                status="healthy",
+                latency_ms=189,
+                items_discovered=35,
+                freshness_score=97
+            )
+        ]
+        db.add_all(sources)
+        db.commit()
 
     now = datetime.utcnow()
 
@@ -327,7 +325,7 @@ Compensation & Perks:
             slug="flipkart-grid-7-robotics-software",
             title="Flipkart GRiD 7.0 — Software Development & AI Track",
             organizer="Flipkart Talent & Engineering",
-            organizer_logo="https://img.icons8.com/color/512/flipkart.png",
+            organizer_logo="/logos/flipkart.svg",
             category="coding_contest",
             mode="online",
             location="All India Engineering Campuses (Virtual)",
@@ -381,6 +379,178 @@ Rewards & Career Outcomes:
             views_count=6410,
             clicks_count=3120,
             applications_count=1020,
+            is_featured=False
+        ),
+        Opportunity(
+            slug="google-graduate-software-engineer-2026",
+            title="Google — Graduate Software Engineer (Full-Time) 2026 Batch",
+            organizer="Google Engineering",
+            organizer_logo="https://www.gstatic.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png",
+            category="job",
+            mode="in-person",
+            location="Bengaluru / Hyderabad, India",
+            short_description="Full-time software engineering role for graduating seniors and recent graduates to build scalable distributed systems, search, and cloud infrastructure.",
+            full_description="""Join Google as a Graduate Software Engineer. As an engineer at Google, you will work on our core products and services alongside world-class engineers.
+
+Key Responsibilities:
+• Design, implement, and deploy high-performance software modules.
+• Work with distributed storage systems, high-throughput microservices, and AI models.
+• Optimize latency, throughput, and system resilience.
+
+Compensation & Benefits:
+• ₹25,00,000 - ₹38,00,000 CTC per annum (Base + Performance Bonus + GSUs).
+• Comprehensive health insurance, relocation support, and daily gourmet meals.""",
+            direct_registration_url="https://careers.google.com/jobs/results/",
+            official_website_url="https://careers.google.com",
+            prize_or_stipend_amount=3000000.0,
+            prize_currency="INR",
+            prize_description="₹25,00,000 - ₹38,00,000 CTC / annum",
+            is_free=True,
+            fee_amount=0.0,
+            deadline=now + timedelta(days=20),
+            start_date=now + timedelta(days=90),
+            end_date=now + timedelta(days=365),
+            eligibility_education=["Undergraduate", "Postgraduate", "Recent Graduate"],
+            eligibility_criteria=[
+                "B.Tech / M.Tech / Dual Degree in Computer Science, IT, or related technical disciplines",
+                "Graduating batch of 2025 or 2026",
+                "Strong foundational proficiency in Data Structures, Algorithms, and Object-Oriented Design"
+            ],
+            skills_required=["C++", "Java", "Python", "Data Structures", "Algorithms", "System Design"],
+            tags=["Google", "Full-Time", "SDE", "Campus Hiring", "Top Tier"],
+            verification_status="VERIFIED_OFFICIAL",
+            trust_score=99,
+            verification_evidence={
+                "domain_verified": True,
+                "ssl_secure": True,
+                "registration_link_tested": True,
+                "source_credibility": "Official Google Careers Portal",
+                "verified_by": "ORBINEX Source Intelligence",
+                "last_checked_iso": now.isoformat(),
+                "checklist": [
+                    "Direct careers.google.com domain verified",
+                    "Official hiring requisition confirmed",
+                    "Zero fee verified"
+                ]
+            },
+            source_platform="Official Partner",
+            source_url="https://careers.google.com",
+            views_count=7820,
+            clicks_count=4120,
+            applications_count=1290,
+            is_featured=True
+        ),
+        Opportunity(
+            slug="microsoft-software-development-engineer-fulltime",
+            title="Microsoft — Software Development Engineer (SDE-1 Full-Time)",
+            organizer="Microsoft India Development Center",
+            organizer_logo="https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg",
+            category="job",
+            mode="hybrid",
+            location="Hyderabad / Bengaluru / Noida, India",
+            short_description="Join Microsoft Azure, Office 365, and AI platform teams as a full-time SDE-1 building cloud services that empower millions worldwide.",
+            full_description="""Microsoft is hiring full-time Software Development Engineers for our India Development Center (IDC).
+
+Role Details:
+• Architect, implement, and monitor cloud-scale features in Azure, Microsoft 365, and Developer Tools.
+• Collaborate with product managers, UX researchers, and senior architects in an agile setting.
+
+Compensation Package:
+• ₹28,00,000 - ₹44,00,000 CTC per annum (Base + Target Bonus + Stock Grants).
+• Wellness allowance, flexible hybrid work model, and tuition reimbursement.""",
+            direct_registration_url="https://careers.microsoft.com",
+            official_website_url="https://microsoft.com",
+            prize_or_stipend_amount=3600000.0,
+            prize_currency="INR",
+            prize_description="₹28,00,000 - ₹44,00,000 CTC / annum",
+            is_free=True,
+            fee_amount=0.0,
+            deadline=now + timedelta(days=26),
+            start_date=now + timedelta(days=75),
+            end_date=now + timedelta(days=365),
+            eligibility_education=["Undergraduate", "Postgraduate"],
+            eligibility_criteria=[
+                "B.Tech / M.Tech in CS, IT, ECE or equivalent technical degrees",
+                "Graduation year: 2025 or 2026",
+                "Minimum CGPA: 7.0 / 10"
+            ],
+            skills_required=["C#", "C++", "Java", "Python", "Cloud Architecture", "Distributed Systems"],
+            tags=["Microsoft", "Full-Time", "Cloud", "Azure", "IDC"],
+            verification_status="VERIFIED_OFFICIAL",
+            trust_score=98,
+            verification_evidence={
+                "domain_verified": True,
+                "ssl_secure": True,
+                "registration_link_tested": True,
+                "source_credibility": "Official Microsoft Careers Portal",
+                "verified_by": "ORBINEX Source Intelligence",
+                "last_checked_iso": now.isoformat(),
+                "checklist": [
+                    "Microsoft domain authentication confirmed",
+                    "Official IDC campus hiring pipeline verified"
+                ]
+            },
+            source_platform="Official Partner",
+            source_url="https://careers.microsoft.com",
+            views_count=6540,
+            clicks_count=3410,
+            applications_count=980,
+            is_featured=False
+        ),
+        Opportunity(
+            slug="razorpay-associate-backend-engineer",
+            title="Razorpay — Associate Backend Engineer (FinTech Core)",
+            organizer="Razorpay Payments",
+            organizer_logo="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg",
+            category="job",
+            mode="in-person",
+            location="Bengaluru, India",
+            short_description="Architect mission-critical payment gateways, ledger engines, and neo-banking APIs handling over $100 Billion in annualized transaction volume.",
+            full_description="""Razorpay is India's leading full-stack financial solutions company. We are looking for Associate Backend Engineers to join our Core Payments & Banking infrastructure teams in Bengaluru.
+
+Key Responsibilities:
+• Build resilient microservices with 99.999% uptime guarantees.
+• Optimize SQL queries, database indexing, and Redis caching for millions of concurrent checkouts.
+
+Compensation:
+• ₹18,00,000 - ₹24,00,000 CTC per annum + ESOPs.""",
+            direct_registration_url="https://razorpay.com/jobs",
+            official_website_url="https://razorpay.com",
+            prize_or_stipend_amount=2100000.0,
+            prize_currency="INR",
+            prize_description="₹18,00,000 - ₹24,00,000 CTC / annum",
+            is_free=True,
+            fee_amount=0.0,
+            deadline=now + timedelta(days=16),
+            start_date=now + timedelta(days=45),
+            end_date=now + timedelta(days=365),
+            eligibility_education=["Undergraduate", "Postgraduate", "Recent Graduate"],
+            eligibility_criteria=[
+                "B.Tech / B.E. / MCA in Computer Science or related fields",
+                "Solid grasp of Go, Python, or Java and Relational Databases",
+                "Passionate about high-throughput FinTech engineering"
+            ],
+            skills_required=["Go", "Python", "PostgreSQL", "Redis", "Kafka", "Docker"],
+            tags=["Razorpay", "FinTech", "Backend", "Full-Time", "Bengaluru"],
+            verification_status="VERIFIED_OFFICIAL",
+            trust_score=97,
+            verification_evidence={
+                "domain_verified": True,
+                "ssl_secure": True,
+                "registration_link_tested": True,
+                "source_credibility": "Official Razorpay Careers",
+                "verified_by": "ORBINEX Source Intelligence",
+                "last_checked_iso": now.isoformat(),
+                "checklist": [
+                    "Official razorpay.com domain verified",
+                    "Core FinTech team opening authenticated"
+                ]
+            },
+            source_platform="Official Partner",
+            source_url="https://razorpay.com/jobs",
+            views_count=4310,
+            clicks_count=2180,
+            applications_count=640,
             is_featured=False
         ),
         Opportunity(
@@ -647,88 +817,92 @@ Prizes:
             is_featured=False
         )
     ]
-    db.add_all(opps)
-    db.commit()
+    existing_slugs = {o.slug for o in db.query(Opportunity).all()}
+    to_add = [o for o in opps if o.slug not in existing_slugs]
+    if to_add:
+        db.add_all(to_add)
+        db.commit()
 
     # 5. Seed Duplicate Log for Admin Merging
-    dup_log = OpportunityDuplicate(
-        primary_id=1,
-        duplicate_id=9,
-        similarity_score=0.94,
-        detection_reason="94% lexical and organizer match; identical official registration URL (sih.gov.in)",
-        status="pending_review"
-    )
-    db.add(dup_log)
-    db.commit()
+    if db.query(OpportunityDuplicate).count() == 0:
+        dup_log = OpportunityDuplicate(
+            primary_id=1,
+            duplicate_id=9,
+            similarity_score=0.94,
+            detection_reason="94% lexical and organizer match; identical official registration URL (sih.gov.in)",
+            status="pending_review"
+        )
+        db.add(dup_log)
+        db.commit()
 
     # 6. Seed Application Tracker with Real Interactive Stages for Aarav Sharma
-    track1 = ApplicationTracker(
-        user_id=1,
-        opportunity_id=1,  # SIH 2026
-        status="APPLIED",
-        applied_date=now - timedelta(days=3),
-        deadline=now + timedelta(days=18),
-        follow_up_date=now + timedelta(days=5),
-        notes="Internal college round shortlisted! Team 'OrbitBuilders' nominated by college SPOC. Working on disaster management problem statement #1428.",
-        submission_url="https://github.com/aarav-sharma-dev/sih-2026-disaster-ai",
-        match_score=96
-    )
-    db.add(track1)
-    db.commit()
-    db.refresh(track1)
+    if db.query(ApplicationTracker).count() == 0:
+        track1 = ApplicationTracker(
+            user_id=1,
+            opportunity_id=1,  # SIH 2026
+            status="APPLIED",
+            applied_date=now - timedelta(days=3),
+            deadline=now + timedelta(days=18),
+            follow_up_date=now + timedelta(days=5),
+            notes="Internal college round shortlisted! Team 'OrbitBuilders' nominated by college SPOC. Working on disaster management problem statement #1428.",
+            submission_url="https://github.com/aarav-sharma-dev/sih-2026-disaster-ai",
+            match_score=96
+        )
+        db.add(track1)
+        db.commit()
+        db.refresh(track1)
 
-    # Tasks for SIH
-    sih_tasks = [
-        ApplicationTask(application_tracker_id=track1.id, title="Submit 1-page solution PPT to College SPOC", is_completed=True, due_date=now - timedelta(days=2), priority="high"),
-        ApplicationTask(application_tracker_id=track1.id, title="Finalize IoT telemetry simulator backend using FastAPI", is_completed=False, due_date=now + timedelta(days=7), priority="high"),
-        ApplicationTask(application_tracker_id=track1.id, title="Test offline map synchronization on React Native demo", is_completed=False, due_date=now + timedelta(days=12), priority="medium")
-    ]
-    db.add_all(sih_tasks)
+        # Tasks for SIH
+        sih_tasks = [
+            ApplicationTask(application_tracker_id=track1.id, title="Submit 1-page solution PPT to College SPOC", is_completed=True, due_date=now - timedelta(days=2), priority="high"),
+            ApplicationTask(application_tracker_id=track1.id, title="Finalize IoT telemetry simulator backend using FastAPI", is_completed=False, due_date=now + timedelta(days=7), priority="high"),
+            ApplicationTask(application_tracker_id=track1.id, title="Test offline map synchronization on React Native demo", is_completed=False, due_date=now + timedelta(days=12), priority="medium")
+        ]
+        db.add_all(sih_tasks)
 
-    track2 = ApplicationTracker(
-        user_id=1,
-        opportunity_id=2,  # ETHIndia 2026
-        status="INTERVIEW_ROUND",
-        applied_date=now - timedelta(days=7),
-        deadline=now + timedelta(days=24),
-        follow_up_date=now + timedelta(days=2),
-        notes="Devfolio application accepted into Round 2 Review! Hacker RSVP confirmed. Working with teammate on Account Abstraction paymaster design.",
-        submission_url="https://devfolio.co/submissions/ethindia-orbit",
-        match_score=92
-    )
-    db.add(track2)
-    db.commit()
-    db.refresh(track2)
+        track2 = ApplicationTracker(
+            user_id=1,
+            opportunity_id=2,  # ETHIndia 2026
+            status="INTERVIEW_ROUND",
+            applied_date=now - timedelta(days=7),
+            deadline=now + timedelta(days=24),
+            follow_up_date=now + timedelta(days=2),
+            notes="Devfolio application accepted into Round 2 Review! Hacker RSVP confirmed. Working with teammate on Account Abstraction paymaster design.",
+            submission_url="https://devfolio.co/submissions/ethindia-orbit",
+            match_score=92
+        )
+        db.add(track2)
+        db.commit()
+        db.refresh(track2)
 
-    eth_tasks = [
-        ApplicationTask(application_tracker_id=track2.id, title="Confirm Hacker Pass & travel details on Devfolio dashboard", is_completed=True, due_date=now - timedelta(days=1), priority="high"),
-        ApplicationTask(application_tracker_id=track2.id, title="Prototype ERC-4337 smart account bundler scripts", is_completed=False, due_date=now + timedelta(days=10), priority="medium")
-    ]
-    db.add_all(eth_tasks)
+        eth_tasks = [
+            ApplicationTask(application_tracker_id=track2.id, title="Confirm Hacker Pass & travel details on Devfolio dashboard", is_completed=True, due_date=now - timedelta(days=1), priority="high"),
+            ApplicationTask(application_tracker_id=track2.id, title="Prototype ERC-4337 smart account bundler scripts", is_completed=False, due_date=now + timedelta(days=10), priority="medium")
+        ]
+        db.add_all(eth_tasks)
 
-    track3 = ApplicationTracker(
-        user_id=1,
-        opportunity_id=3,  # GSoC 2026
-        status="SAVED",
-        applied_date=None,
-        deadline=now + timedelta(days=32),
-        follow_up_date=now + timedelta(days=6),
-        notes="Targeting Python Software Foundation and TensorFlow. Forked repository and set up local development environment.",
-        submission_url=None,
-        match_score=94
-    )
-    db.add(track3)
-    db.commit()
-    db.refresh(track3)
+        track3 = ApplicationTracker(
+            user_id=1,
+            opportunity_id=3,  # GSoC 2026
+            status="SAVED",
+            applied_date=None,
+            deadline=now + timedelta(days=32),
+            follow_up_date=now + timedelta(days=6),
+            notes="Targeting Python Software Foundation and TensorFlow. Forked repository and set up local development environment.",
+            submission_url=None,
+            match_score=94
+        )
+        db.add(track3)
+        db.commit()
+        db.refresh(track3)
 
-    gsoc_tasks = [
-        ApplicationTask(application_tracker_id=track3.id, title="Pick 2 beginner-friendly 'good first issue' tickets on GitHub", is_completed=True, due_date=now - timedelta(days=4), priority="high"),
-        ApplicationTask(application_tracker_id=track3.id, title="Submit pull request with unit test coverage", is_completed=False, due_date=now + timedelta(days=8), priority="high"),
-        ApplicationTask(application_tracker_id=track3.id, title="Draft GSoC project proposal with timeline milestones", is_completed=False, due_date=now + timedelta(days=20), priority="medium")
-    ]
-    db.add_all(gsoc_tasks)
-
-    db.commit()
+        gsoc_tasks = [
+            ApplicationTask(application_tracker_id=track3.id, title="Pick 2 beginner-friendly 'good first issue' tickets on GitHub", is_completed=True, due_date=now - timedelta(days=4), priority="high"),
+            ApplicationTask(application_tracker_id=track3.id, title="Submit pull request with unit test coverage", is_completed=False, due_date=now + timedelta(days=8), priority="high"),
+            ApplicationTask(application_tracker_id=track3.id, title="Draft GSoC project proposal with timeline milestones", is_completed=False, due_date=now + timedelta(days=20), priority="medium")
+        ]
+        db.add_all(gsoc_tasks)
+        db.commit()
     print("ORBINEX database successfully populated with rich opportunities, sources, and tracker data.")
     db.close()
 
