@@ -19,6 +19,12 @@ import {
   addToTracker 
 } from "@/lib/api";
 
+import { 
+  supabase, 
+  getCurrentUser, 
+  signOutUser 
+} from "@/lib/supabase";
+
 import { Sidebar } from "@/components/Sidebar";
 import { Navbar } from "@/components/Navbar";
 import { HackathonCarousel } from "@/components/HackathonCarousel";
@@ -36,6 +42,9 @@ import { ProfileView } from "@/components/ProfileView";
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>("home");
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+
+  // Authenticated Supabase User state
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Opportunities & Tracker data
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -70,6 +79,29 @@ export default function App() {
     { id: "fellowship", label: "Fellowships" },
     { id: "coding_contest", label: "Coding Contests" },
   ];
+
+  // Check Supabase Auth State
+  useEffect(() => {
+    getCurrentUser().then((user) => {
+      if (user) setCurrentUser(user);
+    });
+
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setCurrentUser(session?.user || null);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, []);
+
+  // Sign out handler
+  const handleSignOut = async () => {
+    await signOutUser();
+    setCurrentUser(null);
+  };
 
   // Load Opportunities from API
   const loadOpportunities = async () => {
@@ -179,9 +211,11 @@ export default function App() {
           }
         }}
         onOpenHostModal={() => setShowHostModal(true)}
+        onOpenAuthModal={() => setShowAuthModal(true)}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
         trackedCount={applications.length}
+        currentUser={currentUser}
       />
 
       {/* 2. Main Content Area */}
@@ -195,8 +229,10 @@ export default function App() {
           onOpenAIPrep={() => { setDedicatedOpp(null); setActiveTab("ai_prep"); }}
           onOpenHostModal={() => setShowHostModal(true)}
           onOpenAuthModal={() => setShowAuthModal(true)}
+          onSignOut={handleSignOut}
           activeTab={activeTab}
           setActiveTab={(tab) => { setDedicatedOpp(null); setActiveTab(tab); }}
+          currentUser={currentUser}
         />
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -286,7 +322,7 @@ export default function App() {
                     /* NORMAL DISCOVER FEED (NO ACTIVE SEARCH) */
                     <div className="space-y-6">
                       
-                      {/* 1. Auto-scrollable 3 Latest Hackathons Hero Carousel */}
+                      {/* 1. Auto-scrollable 3 Latest Hackathons Hero Carousel (Consistent Size & Real Image Backgrounds) */}
                       <HackathonCarousel
                         opportunities={opportunities}
                         onSelect={handleSelectOpportunity}

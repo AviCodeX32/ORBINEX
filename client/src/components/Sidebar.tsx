@@ -11,25 +11,30 @@ import {
   Plus, 
   ChevronRight, 
   ChevronLeft, 
-  CheckCircle2
+  CheckCircle2,
+  LogIn
 } from "lucide-react";
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onOpenHostModal: () => void;
+  onOpenAuthModal?: () => void;
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
   trackedCount: number;
+  currentUser?: any;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
   onOpenHostModal,
+  onOpenAuthModal,
   collapsed,
   setCollapsed,
   trackedCount,
+  currentUser,
 }) => {
   const navItems = [
     { id: "home", label: "Home", icon: Home },
@@ -41,6 +46,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "tracker", label: "Application Tracker", icon: KanbanSquare, count: trackedCount },
     { id: "admin", label: "Admin Console", icon: ShieldCheck },
   ];
+
+  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "Avnish Maurya";
+  const userInitials = displayName
+    .split(" ")
+    .map((w: string) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <aside
@@ -136,21 +149,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Bottom Profile Summary Strip */}
       <div className="p-3 border-t border-slate-100">
         <div 
-          onClick={() => setActiveTab("profile")}
+          onClick={() => {
+            if (currentUser) {
+              setActiveTab("profile");
+            } else if (onOpenAuthModal) {
+              onOpenAuthModal();
+            } else {
+              setActiveTab("profile");
+            }
+          }}
           className={`flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors ${
             collapsed ? "justify-center" : ""
           }`}
+          title={currentUser ? "View Profile" : "Sign In to ORBINEX"}
         >
           <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center shrink-0">
-            AM
+            {userInitials || "AM"}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-xs font-bold text-slate-900 truncate">Avnish Maurya</span>
+                <span className="text-xs font-bold text-slate-900 truncate">
+                  {displayName}
+                </span>
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               </div>
-              <p className="text-[10px] text-slate-400 truncate">IIT Delhi • Student</p>
+              <p className="text-[10px] text-slate-400 truncate">
+                {currentUser?.email || "IIT Delhi • Student"}
+              </p>
             </div>
           )}
         </div>

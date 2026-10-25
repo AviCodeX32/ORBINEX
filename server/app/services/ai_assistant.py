@@ -9,16 +9,54 @@ logger = logging.getLogger("orbinex.ai")
 class AIAssistantService:
     """
     Provider-independent AI Layer for ORBINEX.
-    Supports Google Gemini, OpenAI, or Intelligent Deterministic Engine fallback.
+    Leverages Google Gemini 3.5 Flash-Lite LLM with intelligent deterministic engine backup.
     """
 
     def __init__(self):
         self.gemini_key = settings.GEMINI_API_KEY
+        self.gemini_model = "gemini-3.5-flash-lite"
+        self.gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
+
+    def _call_gemini_raw(self, prompt: str) -> Optional[str]:
+        """
+        Calls Google Gemini 3.5 Flash-Lite REST API directly using httpx.
+        """
+        if not self.gemini_key:
+            return None
+
+        try:
+            url = f"{self.gemini_url}?key={self.gemini_key}"
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": prompt}
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.4,
+                    "maxOutputTokens": 2048
+                }
+            }
+            with httpx.Client(timeout=15.0) as client:
+                res = client.post(url, json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            return parts[0].get("text", "")
+                else:
+                    logger.warning(f"Gemini API returned status {res.status_code}: {res.text[:200]}")
+        except Exception as e:
+            logger.warning(f"Gemini API connection error: {e}")
+        return None
 
     def analyze_resume(self, resume_text: str, target_role: str, opportunities: List[Any] = None) -> Dict[str, Any]:
         """
-        Analyzes candidate resume for a target role using Gemini LLM or Intelligent Deterministic Engine.
-        Returns combined score, ATS compatibility, found skills, skill gaps, strengths, and recommendations.
+        Analyzes candidate resume for a target role using Gemini LLM with structured output.
         """
         role_skills_map = {
             "Fullstack SDE": ["react", "typescript", "python", "fastapi", "node.js", "docker", "postgresql", "rest api", "git", "data structures"],
@@ -34,17 +72,15 @@ class AIAssistantService:
         found = [s for s in required_skills if s in resume_lower]
         missing = [s for s in required_skills if s not in resume_lower]
 
-        # Calculate scores
+        # Base ATS calculation
         skill_ratio = len(found) / max(1, len(required_skills))
         base_score = int(skill_ratio * 70)
-        
-        # Word count & metrics check (quantifiable impact)
         word_count = len(resume_text.split())
         ats_score = min(98, max(45, int(base_score + (15 if word_count > 100 else 5) + (10 if "%" in resume_text or "$" in resume_text or "₹" in resume_text else 0))))
         combined_score = min(99, max(40, int((ats_score * 0.5) + (base_score * 0.5) + 12)))
 
         strengths = [
-            f"Strong technical alignment with {len(found)} core competencies for {target_role}",
+            f"Strong alignment with {len(found)} core competencies for {target_role}",
             "Solid project experience and demonstrated version control usage",
             "Clear technical vocabulary recognized by modern ATS parsers"
         ]
@@ -56,9 +92,21 @@ class AIAssistantService:
 
         verdict = (
             f"High Potential Candidate for {target_role} ({combined_score}% match). "
-            f"Resume exhibits strong baseline skills in {', '.join([s.title() for s in found[:3]])}. "
+            f"Resume exhibits strong baseline skills in {', '.join([s.title() for s in found[:3]]) if found else 'fundamental software engineering'}. "
             f"Addressing gaps in {missing[0].title() if missing else 'system architecture'} will significantly boost recruiter callbacks."
         )
+
+        # Try enhancing verdict via Gemini if available
+        prompt = (
+            f"Act as a top tech recruiter and ATS resume specialist. "
+            f"Analyze this resume snippet for the role of '{target_role}':\n\n"
+            f"{resume_text[:1200]}\n\n"
+            f"Provide a 2-sentence actionable verdict evaluating its strength and 1 top recommendation for improvement. "
+            f"Be concise, encouraging, and professional."
+        )
+        gemini_res = self._call_gemini_raw(prompt)
+        if gemini_res and len(gemini_res.strip()) > 20:
+            verdict = gemini_res.strip()
 
         # Match relevant opportunities from database
         matched_opps = []
@@ -96,66 +144,47 @@ class AIAssistantService:
 
         phases = [
             {
-                "phase_name": "Phase 1: Registration & Team Assembly (Days 1-3)",
+                "phase_name": "Phase 1: Registration & Eligibility Verification (Days 1-3)",
                 "actions": [
-                    f"Review official guidelines for {title} on verified portal",
-                    "Assemble complementary team roles (Frontend, Backend/AI, Pitch Lead)",
-                    "Finalize team discord/slack channel and project board"
+                    f"Review official eligibility guidelines for {opportunity.organizer}",
+                    "Assemble core project team and verify registration deadline",
+                    "Fork starter templates and configure GitHub organization"
                 ]
             },
             {
-                "phase_name": "Phase 2: Problem Selection & Ideation (Days 4-7)",
+                "phase_name": "Phase 2: Architecture & Prototype Building (Days 4-12)",
                 "actions": [
-                    "Evaluate official track problem statements & judge criteria",
-                    f"Identify core pain points leveraging {skills[0] if skills else 'modern tech'}",
-                    "Draft 1-page solution architecture diagram & user flow"
+                    f"Implement core logic utilizing {skills[0] if skills else 'TypeScript/Python'}",
+                    "Ensure responsive UI with clean navigation and zero breaking console errors",
+                    "Deploy staging environment on Vercel or cloud provider"
                 ]
             },
             {
-                "phase_name": "Phase 3: Prototype & MVP Sprint (Days 8-14)",
+                "phase_name": "Phase 3: Final Pitch & Submission Verification (Days 13-End)",
                 "actions": [
-                    f"Implement core functionality using {', '.join(skills[:3])}",
-                    "Set up GitHub repository with clean README and deployment link",
-                    "Conduct end-to-end user testing & edge case handling"
-                ]
-            },
-            {
-                "phase_name": "Phase 4: Submission & Pitch Video (Final 48 Hours)",
-                "actions": [
-                    "Record 2-3 minute crisp demo video showing working prototype",
-                    "Double-check all submission fields and public repository permissions",
-                    "Submit before the countdown timer hits 2 hours to avoid server traffic"
+                    "Record 2-minute demo video showcasing real problem-solving impact",
+                    "Submit direct link and verify confirmation email receipt",
+                    "Add project documentation and architecture diagram to README.md"
                 ]
             }
         ]
 
-        if category == "internship":
-            phases = [
-                {
-                    "phase_name": "Phase 1: Resume & ATS Optimization",
-                    "actions": [
-                        f"Align resume keywords with role requirements: {', '.join(skills[:4])}",
-                        "Highlight quantifiable metrics in previous college/open-source projects",
-                        "Ensure GitHub profile and live project links are active"
-                    ]
-                },
-                {
-                    "phase_name": "Phase 2: Technical Preparation & LeetCode/DSA",
-                    "actions": [
-                        "Review core Data Structures & Algorithms (Trees, Graphs, DP)",
-                        f"Brush up on foundational concepts for {skills[0] if skills else 'System Design'}",
-                        "Practice 3 mock timed interview sessions"
-                    ]
-                },
-                {
-                    "phase_name": "Phase 3: Behavioral & Role Fit",
-                    "actions": [
-                        "Prepare STAR method answers for standard situational questions",
-                        f"Research {opportunity.organizer}'s engineering culture and recent projects",
-                        "Prepare 3 insightful questions for the interviewer"
-                    ]
-                }
-            ]
+        # Optional Gemini enhancement for insider tips
+        insider_tips = [
+            "Judges prioritize a working prototype over an unfinished complex architecture.",
+            "Highlight the real-world impact and business viability during the demo.",
+            "Ensure your verification badge is maintained by adhering to official submission rules."
+        ]
+
+        prompt = (
+            f"Provide 3 short, high-value insider tips for a student entering '{title}' organized by '{opportunity.organizer}'. "
+            f"Format as 3 concise bullet points under 20 words each."
+        )
+        gemini_tips = self._call_gemini_raw(prompt)
+        if gemini_tips:
+            lines = [l.strip().lstrip("-*123. ") for l in gemini_tips.strip().split("\n") if len(l.strip()) > 10]
+            if len(lines) >= 3:
+                insider_tips = lines[:3]
 
         return {
             "opportunity_id": opportunity.id,
@@ -163,16 +192,12 @@ class AIAssistantService:
             "phases": phases,
             "key_deliverables": [
                 "Public GitHub Repository with MIT license",
-                "Working Hosted Demo Link (Vercel / AWS)",
+                "Working Hosted Demo Link (Vercel / Cloud)",
                 "2-Minute Video Walkthrough",
                 "Solution Architecture Slide Deck"
             ],
             "suggested_tech_stack": skills[:5] if skills else ["React", "FastAPI", "TailwindCSS"],
-            "insider_tips": [
-                "Judges prioritize a working prototype over an unfinished complex architecture.",
-                "Highlight the real-world impact and business viability during the demo.",
-                "Ensure your verification badge is maintained by adhering to official submission rules."
-            ]
+            "insider_tips": insider_tips
         }
 
     def draft_statement_of_purpose(self, opportunity: Any, user: Any, target_track: Optional[str] = None) -> Dict[str, Any]:
@@ -209,6 +234,16 @@ Warm regards,
 Portfolio: {user.portfolio_url or 'https://portfolio.dev'}
 GitHub: {user.github_url or 'https://github.com'}
 LinkedIn: {user.linkedin_url or 'https://linkedin.com'}"""
+
+        # Gemini enhancement for pitch & cover letter if available
+        prompt = (
+            f"Draft a compelling 2-sentence elevator pitch and a concise 3-paragraph cover letter for student {user.full_name} "
+            f"({user.university}, skilled in {skills_str}) applying to '{opportunity.title}' organized by '{opportunity.organizer}'. "
+            f"Target track: {track_str}. Keep it professional and enthusiastic."
+        )
+        gemini_draft = self._call_gemini_raw(prompt)
+        if gemini_draft and len(gemini_draft.strip()) > 100:
+            cover_letter = gemini_draft.strip()
 
         return {
             "opportunity_id": opportunity.id,

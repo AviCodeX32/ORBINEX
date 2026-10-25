@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { X, Lock, Mail, CheckCircle2, AlertCircle } from "lucide-react";
-import { signInWithGoogle, signInWithEmail, signUpWithEmail, isSupabaseConfigured } from "@/lib/supabase";
+import { X, Lock, Mail, User, CheckCircle2, AlertCircle } from "lucide-react";
+import { signInWithGoogle, signInWithEmail, signUpWithEmail } from "@/lib/supabase";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -12,8 +12,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onSuccess,
 }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("student@orbinex.ai");
-  const [password, setPassword] = useState("password123");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
@@ -22,18 +23,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setErrorMsg(null);
     try {
-      if (!isSupabaseConfigured) {
-        setInfoMsg("Connected with Google OAuth Demo Account (Avnish Maurya - IIT Delhi). Set VITE_SUPABASE_URL in client/.env for live cloud production.");
-        setTimeout(() => {
-          if (onSuccess) onSuccess();
-          onClose();
-        }, 1500);
-        return;
-      }
       const { error } = await signInWithGoogle();
       if (error) throw error;
+      // Google redirect will occur or modal succeeds
     } catch (err: any) {
-      setErrorMsg(err.message || "Google authentication failed");
+      setErrorMsg(err.message || "Google authentication failed. Please verify Supabase Google OAuth settings.");
     } finally {
       setLoading(false);
     }
@@ -43,20 +37,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
-    try {
-      if (!isSupabaseConfigured) {
-        setInfoMsg("Signed in successfully as Avnish Maurya (Student Session).");
-        setTimeout(() => {
-          if (onSuccess) onSuccess();
-          onClose();
-        }, 1500);
-        return;
-      }
+    setInfoMsg(null);
 
+    try {
       if (isSignUp) {
-        const { error } = await signUpWithEmail(email, password);
+        const { data, error } = await signUpWithEmail(email, password, fullName);
         if (error) throw error;
-        setInfoMsg("Account created! Check your email for confirmation link.");
+
+        if (data.user && !data.session) {
+          setInfoMsg("Account registered! Please check your email inbox to confirm your account.");
+        } else {
+          setInfoMsg("Account created successfully! Welcome to ORBINEX.");
+          setTimeout(() => {
+            if (onSuccess) onSuccess();
+            onClose();
+          }, 1200);
+        }
       } else {
         const { error } = await signInWithEmail(email, password);
         if (error) throw error;
@@ -64,7 +60,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setTimeout(() => {
           if (onSuccess) onSuccess();
           onClose();
-        }, 1200);
+        }, 1000);
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Authentication failed");
@@ -76,12 +72,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div 
-        className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-xs"
+        className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 sm:p-8 relative animate-in fade-in zoom-in-95 text-xs select-none"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+          className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -94,7 +90,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {isSignUp ? "Create Your ORBINEX Account" : "Sign In to ORBINEX"}
           </h2>
           <p className="text-xs text-slate-500">
-            Track applications, unlock AI Resume Analyzer, and get verified recommendations.
+            {isSignUp 
+              ? "Join students from top institutes discovering genuine hackathons & jobs."
+              : "Access your personalized application tracker, AI tools & verified feeds."}
           </p>
         </div>
 
@@ -112,8 +110,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* Google OAuth Button */}
+        {/* 1. Google OAuth Button */}
         <button
+          type="button"
           onClick={handleGoogleAuth}
           disabled={loading}
           className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl font-extrabold text-slate-800 flex items-center justify-center gap-3 transition-colors shadow-2xs cursor-pointer mb-4"
@@ -136,7 +135,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Continue with Google</span>
+          <span>{isSignUp ? "Sign Up with Google" : "Continue with Google"}</span>
         </button>
 
         <div className="flex items-center gap-3 my-4">
@@ -145,46 +144,82 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="h-px bg-slate-200 flex-1" />
         </div>
 
-        {/* Email & Password Form */}
-        <form onSubmit={handleEmailAuth} className="space-y-3">
+        {/* 2. Manual Email & Password Form */}
+        <form onSubmit={handleEmailAuth} className="space-y-3.5">
+          {isSignUp && (
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Full Name</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Avnish Maurya"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl outline-none focus:border-blue-500 font-semibold"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="font-bold text-slate-700 block mb-1">Email Address</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-blue-500"
-            />
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type="email"
+                required
+                placeholder="name@university.edu or gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl outline-none focus:border-blue-500 font-semibold"
+              />
+            </div>
           </div>
 
           <div>
             <label className="font-bold text-slate-700 block mb-1">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-blue-500"
-            />
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl outline-none focus:border-blue-500 font-semibold"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-md transition-colors cursor-pointer mt-2"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-md transition-colors cursor-pointer mt-2"
           >
-            {loading ? "Authenticating..." : isSignUp ? "Create Account" : "Sign In"}
+            {loading 
+              ? "Connecting..." 
+              : isSignUp 
+              ? "Create Free Account" 
+              : "Sign In to Account"}
           </button>
         </form>
 
-        <div className="text-center mt-4 pt-3 border-t border-slate-100">
+        <div className="text-center mt-4 pt-4 border-t border-slate-100">
           <button
             type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-xs font-bold text-blue-600 hover:underline"
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setErrorMsg(null);
+              setInfoMsg(null);
+            }}
+            className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
           >
-            {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+            {isSignUp 
+              ? "Already have an account? Sign In" 
+              : "Don't have an account? Sign Up with email"}
           </button>
         </div>
       </div>
