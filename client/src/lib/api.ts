@@ -1,9 +1,24 @@
 // API Client and Data Types for ORBINEX
 
-export const API_BASE_URL = 
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) ||
-  (typeof process !== "undefined" && (process as any).env?.NEXT_PUBLIC_API_URL) ||
-  "http://localhost:8000/api/v1";
+const getApiBaseUrl = (): string => {
+  let url = 
+    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) ||
+    (typeof process !== "undefined" && (process as any).env?.NEXT_PUBLIC_API_URL) ||
+    "http://localhost:8000/api/v1";
+
+  // Remove trailing slashes
+  url = url.trim().replace(/\/+$/, "");
+
+  // If already ends in /api/v1 or /api, return it
+  if (url.endsWith("/api/v1") || url.endsWith("/api")) {
+    return url;
+  }
+
+  // If user passed root URL (e.g. https://orbinex.onrender.com), append /api/v1
+  return `${url}/api/v1`;
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export interface Opportunity {
   id: number;

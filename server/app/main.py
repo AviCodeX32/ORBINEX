@@ -70,3 +70,16 @@ app.include_router(ai.router, prefix=prefix)
 app.include_router(admin.router, prefix=prefix)
 app.include_router(partner.router, prefix=prefix)
 app.include_router(user.router, prefix=prefix)
+
+# Also mount subrouters at root level (e.g. /opportunities, /tracker, /ai, /health)
+# Ensures 100% compatibility whether frontend VITE_API_URL includes /api/v1 or not
+app.include_router(opportunities.router)
+app.include_router(tracker.router)
+app.include_router(ai.router)
+app.include_router(admin.router)
+app.include_router(partner.router)
+app.include_router(user.router)
+
+@app.get("/health")
+def health_check_root():
+    return health_check()
