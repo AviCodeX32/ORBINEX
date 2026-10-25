@@ -13,7 +13,9 @@ import {
   Award,
   ChevronDown,
   ChevronUp,
-  Filter
+  LogIn,
+  Filter,
+  Check
 } from "lucide-react";
 import { 
   ApplicationTracker, 
@@ -28,16 +30,18 @@ interface ApplicationTrackerViewProps {
   onRefresh: () => void;
   onSelectOpportunity: (opp: any) => void;
   onOpenAIPrep: (opp: any) => void;
+  currentUser?: any;
+  onOpenAuthModal?: () => void;
 }
 
 const STAGES = [
   { id: "ALL", label: "All Applications" },
-  { id: "SAVED", label: "Saved", badge: "bg-slate-100 text-slate-700" },
-  { id: "APPLIED", label: "Applied", badge: "bg-blue-50 text-blue-700" },
-  { id: "UNDER_REVIEW", label: "Under Review", badge: "bg-amber-50 text-amber-800" },
-  { id: "INTERVIEW_ROUND", label: "Interview / Round 2", badge: "bg-purple-50 text-purple-700" },
-  { id: "ACCEPTED", label: "Accepted / Won", badge: "bg-emerald-50 text-emerald-700" },
-  { id: "REJECTED", label: "Closed", badge: "bg-rose-50 text-rose-700" },
+  { id: "SAVED", label: "Saved" },
+  { id: "APPLIED", label: "Applied" },
+  { id: "UNDER_REVIEW", label: "Under Review" },
+  { id: "INTERVIEW_ROUND", label: "Interview / Round 2" },
+  { id: "ACCEPTED", label: "Accepted / Won" },
+  { id: "REJECTED", label: "Closed" },
 ];
 
 export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
@@ -45,10 +49,38 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
   onRefresh,
   onSelectOpportunity,
   onOpenAIPrep,
+  currentUser,
+  onOpenAuthModal,
 }) => {
   const [selectedStage, setSelectedStage] = useState("ALL");
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
   const [newTaskTitle, setNewTaskTitle] = useState<Record<number, string>>({});
+
+  // If user is NOT authenticated, display clean Auth Guard card
+  if (!currentUser) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-xl mx-auto shadow-xs space-y-5 animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto border border-blue-100">
+          <KanbanSquare className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-slate-900">
+            Sign In to Access Your Application Pipeline
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+            Manage your opportunities, track deadlines, track interview rounds, organize milestone checklists, and sync your applications in real-time.
+          </p>
+        </div>
+        <button
+          onClick={() => onOpenAuthModal && onOpenAuthModal()}
+          className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs sm:text-sm inline-flex items-center gap-2 transition-all shadow-md cursor-pointer"
+        >
+          <LogIn className="w-4 h-4" />
+          <span>Sign In / Create Account</span>
+        </button>
+      </div>
+    );
+  }
 
   const toggleExpand = (id: number) => {
     setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
@@ -108,7 +140,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in">
       
-      {/* Header & Stats Strip (Unstop My Activity style) */}
+      {/* Header & Stats Strip (Unstop style clean cards) */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
         <div>
           <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
@@ -126,17 +158,17 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Tracked</span>
             <p className="text-2xl font-black text-slate-900 mt-1">{totalCount}</p>
           </div>
-          <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200/80">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block">Applied</span>
-            <p className="text-2xl font-black text-blue-900 mt-1">{appliedCount}</p>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">Applied</span>
+            <p className="text-2xl font-black text-slate-900 mt-1">{appliedCount}</p>
           </div>
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block">In Review / Rounds</span>
-            <p className="text-2xl font-black text-amber-900 mt-1">{inReviewCount}</p>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 block">In Review / Rounds</span>
+            <p className="text-2xl font-black text-slate-900 mt-1">{inReviewCount}</p>
           </div>
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Finalist / Offers</span>
-            <p className="text-2xl font-black text-emerald-900 mt-1">{acceptedCount}</p>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">Finalist / Offers</span>
+            <p className="text-2xl font-black text-slate-900 mt-1">{acceptedCount}</p>
           </div>
         </div>
       </div>
@@ -149,14 +181,14 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
             <button
               key={s.id}
               onClick={() => setSelectedStage(s.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 cursor-pointer ${
                 selectedStage === s.id
-                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                  ? "bg-slate-900 text-white border-slate-900 shadow-xs"
                   : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
               }`}
             >
               <span>{s.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                 selectedStage === s.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
               }`}>
                 {count}
@@ -171,30 +203,31 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
           <KanbanSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
           <h3 className="text-sm font-bold text-slate-800">No applications in this stage</h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Explore verified opportunities on the home page and click "Track" to start managing them here.
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+            Explore verified opportunities on the home page and click "Track Application" to organize them here.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filteredApps.map(app => {
             const isExpanded = !!expandedCards[app.id];
-            const completedTasks = app.tasks.filter(t => t.is_completed).length;
-            const progressPct = app.tasks.length ? Math.round((completedTasks / app.tasks.length) * 100) : 0;
+            const completedTasks = app.tasks ? app.tasks.filter(t => t.is_completed).length : 0;
+            const totalTasks = app.tasks ? app.tasks.length : 0;
+            const progressPct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
             return (
               <div 
                 key={app.id} 
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-blue-400 transition-all space-y-4"
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-slate-400 transition-all space-y-4"
               >
                 {/* Top Row: Category, Title, Stage Dropdown, Actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
                         {app.opportunity?.category}
                       </span>
-                      <span className="text-xs font-semibold text-slate-400">
+                      <span className="text-xs font-semibold text-slate-500">
                         {app.opportunity?.organizer}
                       </span>
                     </div>
@@ -212,7 +245,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                     <select
                       value={app.status}
                       onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                      className="text-xs font-extrabold bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 outline-none focus:border-blue-500"
+                      className="text-xs font-extrabold bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 outline-none focus:border-slate-800 cursor-pointer"
                     >
                       {STAGES.filter(s => s.id !== "ALL").map(s => (
                         <option key={s.id} value={s.id}>{s.label}</option>
@@ -224,8 +257,8 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                         href={app.opportunity.direct_registration_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors"
-                        title="Open Official Portal"
+                        className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Open Official Registration Portal"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -233,7 +266,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
 
                     <button
                       onClick={() => handleDelete(app.id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                      className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                       title="Remove from tracker"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -242,15 +275,15 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                 </div>
 
                 {/* Progress bar & Task expander */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                      <span>Milestones Progress ({completedTasks}/{app.tasks.length} Completed)</span>
+                    <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Milestones Progress ({completedTasks}/{totalTasks} Completed)</span>
                     </span>
                     <button
                       onClick={() => toggleExpand(app.id)}
-                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                      className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
                     >
                       <span>{isExpanded ? "Hide Tasks" : "View Checklist"}</span>
                       {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -259,16 +292,16 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
 
                   <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                     <div 
-                      className="bg-blue-600 h-full rounded-full transition-all"
+                      className="bg-slate-900 h-full rounded-full transition-all"
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>
 
                   {/* Expanded Checklist */}
                   {isExpanded && (
-                    <div className="space-y-2 pt-2 border-t border-slate-200 animate-in fade-in text-xs">
+                    <div className="space-y-2.5 pt-2 border-t border-slate-200 animate-in fade-in text-xs">
                       <div className="space-y-1.5">
-                        {app.tasks.map(task => (
+                        {app.tasks && app.tasks.map(task => (
                           <div
                             key={task.id}
                             onClick={() => handleToggleTask(task.id)}
@@ -277,7 +310,7 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                             {task.is_completed ? (
                               <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                             ) : (
-                              <Square className="w-4 h-4 text-slate-400 group-hover:text-blue-500 shrink-0 mt-0.5" />
+                              <Square className="w-4 h-4 text-slate-400 group-hover:text-slate-800 shrink-0 mt-0.5" />
                             )}
                             <span className={task.is_completed ? "line-through text-slate-400" : "text-slate-800 font-medium"}>
                               {task.title}
@@ -290,16 +323,16 @@ export const ApplicationTrackerView: React.FC<ApplicationTrackerViewProps> = ({
                       <form onSubmit={(e) => handleAddTask(app.id, e)} className="flex items-center gap-1 pt-1">
                         <input
                           type="text"
-                          placeholder="Add new preparation task (e.g. submit deck)..."
+                          placeholder="Add new preparation task (e.g. submit deck, prepare round 1)..."
                           value={newTaskTitle[app.id] || ""}
                           onChange={(e) => setNewTaskTitle(prev => ({ ...prev, [app.id]: e.target.value }))}
-                          className="flex-1 p-1.5 px-3 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-blue-500"
+                          className="flex-1 p-2 px-3 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-slate-800"
                         />
                         <button
                           type="submit"
-                          className="p-1.5 px-3 bg-blue-600 text-white rounded-lg font-bold text-xs hover:bg-blue-700"
+                          className="p-2 px-3.5 bg-slate-900 text-white rounded-lg font-bold text-xs hover:bg-slate-800 cursor-pointer"
                         >
-                          Add
+                          Add Task
                         </button>
                       </form>
                     </div>

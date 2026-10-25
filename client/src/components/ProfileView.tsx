@@ -9,20 +9,61 @@ import {
   Check, 
   CheckCircle2, 
   Plus, 
-  X 
+  X,
+  LogIn
 } from "lucide-react";
 import { UserProfile, fetchUserProfile, updateUserProfile } from "@/lib/api";
 
-export const ProfileView: React.FC = () => {
+interface ProfileViewProps {
+  currentUser?: any;
+  onOpenAuthModal?: () => void;
+}
+
+export const ProfileView: React.FC<ProfileViewProps> = ({
+  currentUser,
+  onOpenAuthModal,
+}) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [newSkill, setNewSkill] = useState("");
 
+  // If user is NOT signed in, show Auth Gate
+  if (!currentUser) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-xl mx-auto shadow-xs space-y-5 animate-in fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center mx-auto border border-slate-200">
+          <UserIcon className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-slate-900">
+            Sign In to Access Your Student Profile
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+            Personalize your education details, verify your college status, track your skills, and get personalized recommendations for hackathons and jobs.
+          </p>
+        </div>
+        <button
+          onClick={() => onOpenAuthModal && onOpenAuthModal()}
+          className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs sm:text-sm inline-flex items-center gap-2 transition-all shadow-md cursor-pointer"
+        >
+          <LogIn className="w-4 h-4" />
+          <span>Sign In / Create Account</span>
+        </button>
+      </div>
+    );
+  }
+
   useEffect(() => {
     fetchUserProfile()
       .then(data => {
+        // Sync with authenticated Supabase user metadata if available
+        if (currentUser) {
+          const authName = currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || data.full_name;
+          data.full_name = authName;
+          data.email = currentUser.email || data.email;
+        }
         setProfile(data);
         setLoading(false);
       })
@@ -30,7 +71,7 @@ export const ProfileView: React.FC = () => {
         console.error("Failed to load profile", err);
         setLoading(false);
       });
-  }, []);
+  }, [currentUser]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +120,7 @@ export const ProfileView: React.FC = () => {
   if (loading) {
     return (
       <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center shadow-xs">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
         <p className="text-xs text-slate-500 font-semibold">Loading verified student profile...</p>
       </div>
     );
@@ -87,82 +128,74 @@ export const ProfileView: React.FC = () => {
 
   if (!profile) return null;
 
+  const displayName = profile.full_name || currentUser?.email?.split("@")[0] || "Student";
+  const userInitials = displayName
+    .split(" ")
+    .map((w: string) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
       
       {/* Top Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center gap-5">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
-          AS
+        <div className="w-20 h-20 rounded-2xl bg-slate-900 text-white font-black text-2xl flex items-center justify-center shadow-md shrink-0">
+          {userInitials || "U"}
         </div>
 
         <div className="flex-1 text-center sm:text-left">
           <div className="flex items-center justify-center sm:justify-start gap-2">
-            <h2 className="text-xl font-extrabold text-slate-900">{profile.full_name}</h2>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+            <h2 className="text-xl font-extrabold text-slate-900">{displayName}</h2>
+            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               Verified Student
             </span>
           </div>
           <p className="text-xs text-slate-600 font-medium mt-1">
-            {profile.degree} • {profile.university} (Class of {profile.graduation_year})
+            {profile.degree || "Computer Science"} • {profile.university || "Engineering Institute"} (Class of {profile.graduation_year || 2026})
           </p>
           <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-            {profile.bio}
+            {profile.bio || "Active builder participating in competitive hackathons and engineering roles."}
           </p>
         </div>
 
         <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center shrink-0">
-          <span className="text-[10px] font-bold uppercase text-slate-400 block">Current CGPA</span>
-          <span className="text-xl font-black text-slate-900">{profile.cgpa} / 10.0</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Talent Score</span>
+          <p className="text-2xl font-black text-slate-900">850</p>
+          <span className="text-[10px] text-emerald-600 font-bold">Top 5% Builder</span>
         </div>
       </div>
 
-      {saveSuccess && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
-          <Check className="w-4 h-4 text-emerald-600" />
-          <span>Profile and AI recommendation preferences successfully updated!</span>
-        </div>
-      )}
-
       {/* Main Profile Form */}
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6 text-xs">
         
-        {/* Academic Information */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+        {/* Education Details */}
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
             <GraduationCap className="w-4 h-4 text-blue-600" />
-            <span>Academic Qualifications & University</span>
+            <span>Academic Qualifications</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="font-bold text-slate-700 block mb-1">Full Name</label>
               <input
                 type="text"
                 value={profile.full_name}
                 onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
               />
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Email (Authenticated)</label>
-              <input
-                type="email"
-                disabled
-                value={profile.email}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">University / College</label>
+              <label className="font-bold text-slate-700 block mb-1">College / University</label>
               <input
                 type="text"
                 value={profile.university}
                 onChange={(e) => setProfile({ ...profile, university: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
               />
             </div>
 
@@ -172,7 +205,7 @@ export const ProfileView: React.FC = () => {
                 type="text"
                 value={profile.degree}
                 onChange={(e) => setProfile({ ...profile, degree: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
               />
             </div>
 
@@ -181,116 +214,157 @@ export const ProfileView: React.FC = () => {
               <input
                 type="number"
                 value={profile.graduation_year}
-                onChange={(e) => setProfile({ ...profile, graduation_year: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">CGPA (out of 10.0)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={profile.cgpa}
-                onChange={(e) => setProfile({ ...profile, cgpa: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500"
+                onChange={(e) => setProfile({ ...profile, graduation_year: parseInt(e.target.value) || 2026 })}
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
               />
             </div>
           </div>
         </div>
 
-        {/* Skills Tag Management */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Code className="w-4 h-4 text-blue-600" />
-              <span>Skills & Competencies (AI Match Engine Keywords)</span>
-            </h3>
-            <span className="text-[11px] text-slate-400 font-semibold">{profile.skills.length} Skills</span>
-          </div>
+        {/* Technical Competencies */}
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+            <Code className="w-4 h-4 text-emerald-600" />
+            <span>Technical Skills & Competencies</span>
+          </h3>
 
-          <div className="flex flex-wrap gap-2">
-            {profile.skills.map((skill, idx) => (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {profile.skills.map((skill) => (
               <span
-                key={idx}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200"
+                key={skill}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 text-slate-800 font-bold border border-slate-200"
               >
                 <span>{skill}</span>
                 <button
                   type="button"
                   onClick={() => handleRemoveSkill(skill)}
-                  className="hover:text-rose-600 transition-colors"
+                  className="text-slate-400 hover:text-rose-600 cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 max-w-sm pt-2">
+          <div className="flex gap-2 max-w-sm">
             <input
               type="text"
+              placeholder="Add skill (e.g. Next.js, Docker, Kubernetes)..."
               value={newSkill}
               onChange={(e) => setNewSkill(e.target.value)}
-              placeholder="Add skill (e.g. Next.js, Kubernetes, NLP)..."
-              className="text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-blue-500 flex-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddSkill();
+                }
+              }}
+              className="flex-1 p-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium text-xs"
             />
             <button
               type="button"
               onClick={handleAddSkill}
-              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+              className="px-3.5 py-2 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add</span>
+              Add
             </button>
           </div>
         </div>
 
         {/* Target Opportunity Types */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+            <Sparkles className="w-4 h-4 text-purple-600" />
             <span>Target Opportunity Preferences</span>
           </h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {[
               { id: "hackathon", label: "Hackathons" },
+              { id: "job", label: "Full-Time Jobs" },
               { id: "internship", label: "Internships" },
               { id: "scholarship", label: "Scholarships" },
               { id: "fellowship", label: "Fellowships" },
               { id: "coding_contest", label: "Coding Contests" },
-              { id: "grant", label: "Research Grants" }
-            ].map(type => (
-              <label 
-                key={type.id}
-                className={`p-3 rounded-xl border flex items-center gap-2 cursor-pointer font-bold transition-all ${
-                  profile.target_types.includes(type.id)
-                    ? "bg-blue-50 border-blue-300 text-blue-900"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={profile.target_types.includes(type.id)}
-                  onChange={() => handleTargetTypeToggle(type.id)}
-                  className="rounded text-blue-600 focus:ring-blue-500"
-                />
-                <span>{type.label}</span>
-              </label>
-            ))}
+            ].map((item) => {
+              const active = profile.target_types.includes(item.id);
+              return (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => handleTargetTypeToggle(item.id)}
+                  className={`p-3 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                    active
+                      ? "border-slate-900 bg-slate-900 text-white shadow-xs"
+                      : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  <span className="block truncate">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Save Button */}
-        <div className="flex justify-end pt-2">
+        {/* External Profiles */}
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+            <LinkIcon className="w-4 h-4 text-blue-600" />
+            <span>Developer Presence Links</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">GitHub Profile</label>
+              <input
+                type="text"
+                value={profile.github_url || ""}
+                onChange={(e) => setProfile({ ...profile, github_url: e.target.value })}
+                placeholder="https://github.com/username"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">LinkedIn Profile</label>
+              <input
+                type="text"
+                value={profile.linkedin_url || ""}
+                onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
+                placeholder="https://linkedin.com/in/username"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Portfolio / Devfolio URL</label>
+              <input
+                type="text"
+                value={profile.portfolio_url || ""}
+                onChange={(e) => setProfile({ ...profile, portfolio_url: e.target.value })}
+                placeholder="https://yourname.dev"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-slate-800 font-medium"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="pt-4 flex items-center justify-between border-t border-slate-100">
+          <div>
+            {saveSuccess && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 animate-in fade-in">
+                <Check className="w-4 h-4" />
+                <span>Profile updated successfully!</span>
+              </span>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2"
+            className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl shadow-xs transition-colors cursor-pointer"
           >
-            <Check className="w-4 h-4" />
-            <span>{saving ? "Saving Changes..." : "Save Profile & Preferences"}</span>
+            {saving ? "Saving Changes..." : "Save Profile"}
           </button>
         </div>
 
@@ -299,4 +373,3 @@ export const ProfileView: React.FC = () => {
     </div>
   );
 };
-

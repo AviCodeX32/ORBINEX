@@ -148,6 +148,10 @@ export default function App() {
   };
 
   const handleTrackOpportunity = async (opp: Opportunity) => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
     try {
       await addToTracker({
         opportunity_id: opp.id,
@@ -161,6 +165,10 @@ export default function App() {
   };
 
   const handleToggleBookmark = (opp: Opportunity) => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
     setBookmarkedIds(prev => {
       const next = new Set(prev);
       if (next.has(opp.id)) next.delete(opp.id);
@@ -195,6 +203,11 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={(tab) => {
           setDedicatedOpp(null);
+          const protectedTabs = ["tracker", "admin", "profile"];
+          if (protectedTabs.includes(tab) && !currentUser) {
+            setShowAuthModal(true);
+            return;
+          }
           if (tab === "internships") {
             setSelectedCategory("internship");
             setActiveTab("home");
@@ -211,7 +224,10 @@ export default function App() {
             setActiveTab(tab);
           }
         }}
-        onOpenHostModal={() => setShowHostModal(true)}
+        onOpenHostModal={() => {
+          if (!currentUser) setShowAuthModal(true);
+          else setShowHostModal(true);
+        }}
         onOpenAuthModal={() => setShowAuthModal(true)}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
@@ -226,13 +242,39 @@ export default function App() {
         <Navbar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          onOpenResumeAnalyzer={() => setShowResumeModal(true)}
-          onOpenAIPrep={() => { setDedicatedOpp(null); setActiveTab("ai_prep"); }}
-          onOpenHostModal={() => setShowHostModal(true)}
+          onOpenResumeAnalyzer={() => {
+            if (!currentUser) setShowAuthModal(true);
+            else setShowResumeModal(true);
+          }}
+          onOpenAIPrep={() => {
+            if (!currentUser) {
+              setShowAuthModal(true);
+            } else {
+              setDedicatedOpp(null);
+              setActiveTab("ai_prep");
+            }
+          }}
+          onOpenHostModal={() => {
+            if (!currentUser) setShowAuthModal(true);
+            else setShowHostModal(true);
+          }}
           onOpenAuthModal={() => setShowAuthModal(true)}
           onSignOut={handleSignOut}
           activeTab={activeTab}
-          setActiveTab={(tab) => { setDedicatedOpp(null); setActiveTab(tab); }}
+          setActiveTab={(tab) => {
+            setDedicatedOpp(null);
+            const protectedTabs = ["tracker", "admin", "profile", "ai_prep"];
+            if (protectedTabs.includes(tab) && !currentUser) {
+              setShowAuthModal(true);
+              return;
+            }
+            if (tab === "jobs") {
+              setSelectedCategory("job");
+              setActiveTab("home");
+            } else {
+              setActiveTab(tab);
+            }
+          }}
           currentUser={currentUser}
         />
 
@@ -473,7 +515,12 @@ export default function App() {
               {/* ========================================================= */}
               {/* VIEW: MENTORSHIP VIEW                                     */}
               {/* ========================================================= */}
-              {activeTab === "mentorship" && <MentorshipView />}
+              {activeTab === "mentorship" && (
+                <MentorshipView 
+                  currentUser={currentUser}
+                  onOpenAuthModal={() => setShowAuthModal(true)}
+                />
+              )}
 
               {/* ========================================================= */}
               {/* VIEW: APPLICATION TRACKER VIEW                           */}
@@ -484,6 +531,8 @@ export default function App() {
                   onRefresh={loadApplications}
                   onSelectOpportunity={handleSelectOpportunity}
                   onOpenAIPrep={(opp) => { handleSelectOpportunity(opp); }}
+                  currentUser={currentUser}
+                  onOpenAuthModal={() => setShowAuthModal(true)}
                 />
               )}
 
@@ -505,7 +554,12 @@ export default function App() {
               {/* ========================================================= */}
               {/* VIEW: STUDENT PROFILE                                     */}
               {/* ========================================================= */}
-              {activeTab === "profile" && <ProfileView />}
+              {activeTab === "profile" && (
+                <ProfileView 
+                  currentUser={currentUser}
+                  onOpenAuthModal={() => setShowAuthModal(true)}
+                />
+              )}
 
             </>
           )}
@@ -539,6 +593,7 @@ export default function App() {
             const found = opportunities.find(o => o.id === oppId);
             if (found) handleSelectOpportunity(found);
           }}
+          currentUser={currentUser}
         />
       )}
 

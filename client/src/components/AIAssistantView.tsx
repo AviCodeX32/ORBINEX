@@ -103,20 +103,21 @@ export const AIAssistantView: React.FC<AIAssistantViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in">
       
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 rounded-2xl p-6 text-white shadow-md">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-xs font-bold tracking-wide backdrop-blur-md mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            AI OPPORTUNITY INTELLIGENCE
+      {/* Top Header Card (Clean Light Mode) */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs">
+        <div className="max-w-3xl space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-extrabold text-slate-800">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>AI OPPORTUNITY INTELLIGENCE</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-snug">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             AI-Assisted Application Preparation & Playbooks
           </h2>
-          <p className="text-xs sm:text-sm text-blue-100 mt-1">
-            Deterministic qualification matching paired with LLM reasoning. Evaluate skill gaps, generate tailored milestone checklists, and craft personalized statements of purpose.
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Deterministic qualification matching paired with Google Gemini 3.5 AI reasoning. Evaluate skill gaps, generate tailored milestone checklists, and craft personalized statements of purpose.
           </p>
         </div>
       </div>

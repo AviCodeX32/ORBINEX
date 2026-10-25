@@ -14,10 +14,30 @@ import {
   X
 } from "lucide-react";
 
-export const MentorshipView: React.FC = () => {
+interface MentorshipViewProps {
+  currentUser?: any;
+  onOpenAuthModal?: () => void;
+}
+
+export const MentorshipView: React.FC<MentorshipViewProps> = ({
+  currentUser,
+  onOpenAuthModal,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedMentor, setSelectedMentor] = useState<any | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+
+  const handleBookSession = () => {
+    if (!currentUser && onOpenAuthModal) {
+      onOpenAuthModal();
+      return;
+    }
+    setBookingSuccess(true);
+    setTimeout(() => {
+      setBookingSuccess(false);
+      setSelectedMentor(null);
+    }, 2500);
+  };
 
   const categories = [
     { id: "All", label: "All Sessions" },
@@ -98,14 +118,6 @@ export const MentorshipView: React.FC = () => {
   const filteredMentors = selectedCategory === "All"
     ? mentors
     : mentors.filter(m => m.category === selectedCategory || m.skills.includes(selectedCategory));
-
-  const handleBookSession = () => {
-    setBookingSuccess(true);
-    setTimeout(() => {
-      setBookingSuccess(false);
-      setSelectedMentor(null);
-    }, 2500);
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in select-none">
@@ -224,7 +236,13 @@ export const MentorshipView: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => setSelectedMentor(mentor)}
+                  onClick={() => {
+                    if (!currentUser && onOpenAuthModal) {
+                      onOpenAuthModal();
+                      return;
+                    }
+                    setSelectedMentor(mentor);
+                  }}
                   className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Book Session</span>

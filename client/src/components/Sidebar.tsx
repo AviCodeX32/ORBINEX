@@ -47,13 +47,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "admin", label: "Admin Console", icon: ShieldCheck },
   ];
 
-  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "Avnish Maurya";
+  const displayName = currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "";
   const userInitials = displayName
-    .split(" ")
-    .map((w: string) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+    ? displayName
+        .split(" ")
+        .map((w: string) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "";
 
   return (
     <aside
@@ -101,7 +103,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* "+ Host Opportunity" Button */}
         <div className="p-3">
           <button
-            onClick={onOpenHostModal}
+            onClick={() => {
+              if (!currentUser && onOpenAuthModal) {
+                onOpenAuthModal();
+              } else {
+                onOpenHostModal();
+              }
+            }}
             className={`w-full flex items-center justify-center gap-2 font-bold text-xs rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-xs cursor-pointer ${
               collapsed ? "py-2.5" : "py-2.5 px-3"
             }`}
@@ -117,11 +125,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const requiresAuth = ["tracker", "admin"].includes(item.id);
 
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  if (requiresAuth && !currentUser && onOpenAuthModal) {
+                    onOpenAuthModal();
+                    return;
+                  }
+                  setActiveTab(item.id);
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isActive
                     ? "bg-slate-100 text-slate-900 font-bold"
@@ -146,40 +161,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Bottom Profile Summary Strip */}
+      {/* Bottom Profile / Sign-in Strip */}
       <div className="p-3 border-t border-slate-100">
-        <div 
-          onClick={() => {
-            if (currentUser) {
-              setActiveTab("profile");
-            } else if (onOpenAuthModal) {
-              onOpenAuthModal();
-            } else {
-              setActiveTab("profile");
-            }
-          }}
-          className={`flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors ${
-            collapsed ? "justify-center" : ""
-          }`}
-          title={currentUser ? "View Profile" : "Sign In to ORBINEX"}
-        >
-          <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center shrink-0">
-            {userInitials || "AM"}
-          </div>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-bold text-slate-900 truncate">
-                  {displayName}
-                </span>
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              </div>
-              <p className="text-[10px] text-slate-400 truncate">
-                {currentUser?.email || "IIT Delhi • Student"}
-              </p>
+        {currentUser ? (
+          <div 
+            onClick={() => setActiveTab("profile")}
+            className={`flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors ${
+              collapsed ? "justify-center" : ""
+            }`}
+            title="View Profile"
+          >
+            <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center shrink-0">
+              {userInitials || "U"}
             </div>
-          )}
-        </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-slate-900 truncate">
+                    {displayName || "Student"}
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                </div>
+                <p className="text-[10px] text-slate-400 truncate">
+                  {currentUser?.email || "Student Builder"}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => onOpenAuthModal && onOpenAuthModal()}
+            className={`w-full flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition-colors border border-slate-200 cursor-pointer ${
+              collapsed ? "justify-center" : ""
+            }`}
+            title="Sign In to ORBINEX"
+          >
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <LogIn className="w-4 h-4" />
+            </div>
+            {!collapsed && (
+              <div className="flex-1 text-left min-w-0">
+                <span className="text-xs font-extrabold text-slate-900 block truncate">
+                  Sign In / Register
+                </span>
+                <span className="text-[10px] text-slate-400 block truncate">
+                  Unlock Tracker & AI
+                </span>
+              </div>
+            )}
+          </button>
+        )}
       </div>
     </aside>
   );
