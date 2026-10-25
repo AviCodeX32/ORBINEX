@@ -23,11 +23,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setErrorMsg(null);
     try {
-      const { error } = await signInWithGoogle();
+      const { data, error } = await signInWithGoogle();
       if (error) throw error;
-      // Google redirect will occur or modal succeeds
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch (err: any) {
-      setErrorMsg(err.message || "Google authentication failed. Please verify Supabase Google OAuth settings.");
+      const msg = err.message || "";
+      if (msg.toLowerCase().includes("provider") || msg.toLowerCase().includes("not enabled")) {
+        setErrorMsg("Google Sign-In is not enabled yet in your Supabase project (Authentication → Providers → Google). You can sign up / sign in below using Email & Password immediately!");
+      } else {
+        setErrorMsg(err.message || "Google authentication failed. Please check Supabase Google provider settings.");
+      }
     } finally {
       setLoading(false);
     }

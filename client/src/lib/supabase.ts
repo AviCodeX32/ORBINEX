@@ -19,12 +19,27 @@ export async function signInWithGoogle() {
   if (!supabase) {
     return { data: null, error: new Error("Supabase credentials not configured") };
   }
-  return await supabase.auth.signInWithOAuth({
+  const res = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo: window.location.origin,
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+      },
     },
   });
+
+  if (res.error) {
+    return res;
+  }
+
+  // If Supabase returned redirect URL, navigate browser to it
+  if (res.data?.url) {
+    window.location.href = res.data.url;
+  }
+
+  return res;
 }
 
 /**
@@ -68,8 +83,14 @@ export async function signOutUser() {
  */
 export async function getCurrentUser(): Promise<User | null> {
   if (!supabase) return null;
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session.user;
+    const { data: { user } } = await supabase.auth.getUser();
+    return user || null;
+  } catch (err) {
+    return null;
+  }
 }
 
 /**
