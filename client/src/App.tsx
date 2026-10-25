@@ -4,19 +4,11 @@ import {
   Search, 
   Filter, 
   SlidersHorizontal, 
-  Layers, 
   CheckCircle2, 
   ShieldCheck, 
   Award, 
   Compass, 
-  ArrowRight,
-  TrendingUp,
-  RotateCcw,
-  GraduationCap,
-  Trophy,
-  Briefcase,
-  Users,
-  FileText
+  RotateCcw
 } from "lucide-react";
 
 import { 
@@ -30,7 +22,6 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { Navbar } from "@/components/Navbar";
 import { HackathonCarousel } from "@/components/HackathonCarousel";
-import { CompanyLogosRow } from "@/components/CompanyLogosRow";
 import { OpportunityCard } from "@/components/OpportunityCard";
 import { DedicatedOpportunityView } from "@/components/DedicatedOpportunityView";
 import { ApplicationTrackerView } from "@/components/ApplicationTrackerView";
@@ -45,7 +36,6 @@ import { ProfileView } from "@/components/ProfileView";
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>("home");
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<string>("Talent");
 
   // Opportunities & Tracker data
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -56,6 +46,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedMode, setSelectedMode] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isFreeOnly, setIsFreeOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>("recommended");
 
@@ -70,7 +61,17 @@ export default function App() {
   // Bookmarks state
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
 
-  // Load Opportunities
+  // Category navigation tabs
+  const categories = [
+    { id: "all", label: "All Opportunities" },
+    { id: "hackathon", label: "Hackathons" },
+    { id: "internship", label: "Internships" },
+    { id: "scholarship", label: "Scholarships" },
+    { id: "fellowship", label: "Fellowships" },
+    { id: "coding_contest", label: "Coding Contests" },
+  ];
+
+  // Load Opportunities from API
   const loadOpportunities = async () => {
     try {
       setLoading(true);
@@ -78,6 +79,7 @@ export default function App() {
         q: searchQuery || undefined,
         category: selectedCategory !== "all" ? selectedCategory : undefined,
         mode: selectedMode !== "all" ? selectedMode : undefined,
+        status: selectedStatus !== "all" ? selectedStatus : undefined,
         is_free: isFreeOnly ? true : undefined,
         sort: sortBy,
       });
@@ -100,13 +102,13 @@ export default function App() {
 
   useEffect(() => {
     loadOpportunities();
-  }, [searchQuery, selectedCategory, selectedMode, isFreeOnly, sortBy]);
+  }, [searchQuery, selectedCategory, selectedMode, selectedStatus, isFreeOnly, sortBy]);
 
   useEffect(() => {
     loadApplications();
   }, []);
 
-  // Card select -> Opens dedicated full page view (like Unstop)
+  // Card select -> Opens dedicated full page view
   const handleSelectOpportunity = (opp: Opportunity) => {
     setDedicatedOpp(opp);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -134,35 +136,28 @@ export default function App() {
     });
   };
 
-  const trackedOpportunityIds = new Set(applications.map(a => a.opportunity_id));
-
-  // Quick categories navigation bar (Unstop screenshot #1)
-  const quickCategories = [
-    { id: "all", label: "All Opportunities", icon: Compass },
-    { id: "hackathon", label: "Hackathons", icon: Trophy },
-    { id: "internship", label: "Internships", icon: GraduationCap },
-    { id: "scholarship", label: "Scholarships", icon: Award },
-    { id: "coding_contest", label: "Coding Contests", icon: Sparkles },
-    { id: "mentorship_nav", label: "Mentorship", icon: Users },
-    { id: "resume_nav", label: "AI Resume Analyzer", icon: FileText, highlight: true },
-  ];
-
-  const handleQuickCategoryClick = (catId: string) => {
-    setDedicatedOpp(null);
-    if (catId === "mentorship_nav") {
-      setActiveTab("mentorship");
-    } else if (catId === "resume_nav") {
-      setShowResumeModal(true);
-    } else {
-      setSelectedCategory(catId);
-      setActiveTab("home");
-    }
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedMode("all");
+    setSelectedStatus("all");
+    setIsFreeOnly(false);
+    setSortBy("recommended");
   };
+
+  const isFilteringActive = 
+    selectedCategory !== "all" || 
+    selectedMode !== "all" || 
+    selectedStatus !== "all" || 
+    isFreeOnly || 
+    sortBy !== "recommended";
+
+  const trackedOpportunityIds = new Set(applications.map(a => a.opportunity_id));
 
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900 font-sans antialiased">
       
-      {/* 1. Left Sidebar Navigation (Unstop style) */}
+      {/* 1. Left Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={(tab) => {
@@ -187,14 +182,12 @@ export default function App() {
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
         trackedCount={applications.length}
-        userRole={userRole}
-        setUserRole={setUserRole}
       />
 
       {/* 2. Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Navbar with Big Search Bar & AI Features */}
+        {/* Top Navbar with Search Bar & AI Features */}
         <Navbar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -209,7 +202,7 @@ export default function App() {
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
           
           {/* ========================================================= */}
-          {/* DEDICATED OPPORTUNITY FULL-PAGE VIEW (Like Unstop)         */}
+          {/* DEDICATED OPPORTUNITY FULL-PAGE VIEW                      */}
           {/* ========================================================= */}
           {dedicatedOpp ? (
             <DedicatedOpportunityView
@@ -226,138 +219,214 @@ export default function App() {
               {activeTab === "home" && (
                 <div className="space-y-6 animate-in fade-in">
                   
-                  {/* Category Quick Navigation Cards (Like Unstop screenshot #1) */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                    {quickCategories.map((cat) => {
-                      const Icon = cat.icon;
-                      const isSelected = selectedCategory === cat.id;
-
-                      return (
-                        <div
-                          key={cat.id}
-                          onClick={() => handleQuickCategoryClick(cat.id)}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center justify-center text-center group ${
-                            isSelected
-                              ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                              : cat.highlight
-                              ? "bg-gradient-to-tr from-purple-50 to-indigo-50 border-purple-200 text-purple-800 hover:border-purple-400"
-                              : "bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-xs"
-                          }`}
-                        >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110 ${
-                            isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"
-                          }`}>
-                            <Icon className="w-5 h-5" />
+                  {/* IF SEARCH IS ACTIVE: Display ONLY the matching opportunities */}
+                  {searchQuery.trim().length > 0 ? (
+                    <div className="space-y-6">
+                      
+                      {/* Search Results Summary Header */}
+                      <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Search className="w-4 h-4 text-blue-600" />
+                            <h2 className="text-sm font-bold text-slate-900">
+                              Search results for <span className="text-blue-600 font-extrabold">"{searchQuery}"</span>
+                            </h2>
                           </div>
-                          <span className="text-[11px] font-black tracking-tight truncate max-w-[110px]">
-                            {cat.label}
-                          </span>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Showing {opportunities.length} opportunities matching your keyword
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
 
-                  {/* Auto-scrollable 3 Latest Hackathons Carousel (Replaces Hero section, slides every 5 sec) */}
-                  <HackathonCarousel
-                    opportunities={opportunities}
-                    onSelect={handleSelectOpportunity}
-                  />
-
-                  {/* Mentors & Partners from Top Companies (Google, Amazon, Microsoft, IBM, Flipkart) */}
-                  <CompanyLogosRow
-                    onExploreMentorship={() => { setDedicatedOpp(null); setActiveTab("mentorship"); }}
-                  />
-
-                  {/* Filter & Sorting Controls */}
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold text-slate-700">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Mode:</span>
-                        <select
-                          value={selectedMode}
-                          onChange={(e) => setSelectedMode(e.target.value)}
-                          className="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-blue-500 font-bold"
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors self-start sm:self-auto cursor-pointer"
                         >
-                          <option value="all">All Modes</option>
-                          <option value="online">Online / Remote</option>
-                          <option value="in-person">In-Person</option>
-                          <option value="hybrid">Hybrid</option>
-                        </select>
+                          Clear Search
+                        </button>
                       </div>
 
-                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={isFreeOnly}
-                          onChange={(e) => setIsFreeOnly(e.target.checked)}
-                          className="rounded text-blue-600 focus:ring-blue-500"
-                        />
-                        <span>Free Participation Only</span>
-                      </label>
-                    </div>
+                      {/* Search Results Grid */}
+                      {loading ? (
+                        <div className="py-20 text-center bg-white rounded-3xl border border-slate-200">
+                          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                          <p className="text-xs font-bold text-slate-600">Searching genuine opportunities...</p>
+                        </div>
+                      ) : opportunities.length === 0 ? (
+                        <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8">
+                          <Compass className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                          <h3 className="text-base font-bold text-slate-800">
+                            No opportunities matching "{searchQuery}"
+                          </h3>
+                          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                            Try searching for general keywords like "hackathon", "internship", "AI", or "developer".
+                          </p>
+                          <button
+                            onClick={() => setSearchQuery("")}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold cursor-pointer"
+                          >
+                            Reset Search
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {opportunities.map((opp) => (
+                            <OpportunityCard
+                              key={opp.id}
+                              opportunity={opp}
+                              onSelect={handleSelectOpportunity}
+                              isBookmarked={bookmarkedIds.has(opp.id)}
+                              onToggleBookmark={handleToggleBookmark}
+                            />
+                          ))}
+                        </div>
+                      )}
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Sort:</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
-                      >
-                        <option value="recommended">Personalized Match</option>
-                        <option value="deadline">Closing Soonest</option>
-                        <option value="prize">Highest Prize / Stipend</option>
-                        <option value="newest">Recently Discovered</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Minimal Opportunity Cards Grid */}
-                  {loading ? (
-                    <div className="py-20 text-center bg-white rounded-3xl border border-slate-200">
-                      <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                      <p className="text-xs font-bold text-slate-600">Loading verified opportunities...</p>
-                    </div>
-                  ) : opportunities.length === 0 ? (
-                    <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8">
-                      <Compass className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <h3 className="text-base font-bold text-slate-800">No matching opportunities found</h3>
-                      <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                        Try adjusting your search query, mode, or category filters.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSelectedCategory("all");
-                          setSelectedMode("all");
-                          setIsFreeOnly(false);
-                        }}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
-                      >
-                        Reset Filters
-                      </button>
                     </div>
                   ) : (
-                    <div>
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                          Active Verified Opportunities ({opportunities.length})
-                        </span>
-                        <span className="text-[11px] text-slate-400 font-semibold">
-                          Click any card to view full details & AI prep
-                        </span>
-                      </div>
+                    /* NORMAL DISCOVER FEED (NO ACTIVE SEARCH) */
+                    <div className="space-y-6">
+                      
+                      {/* 1. Auto-scrollable 3 Latest Hackathons Hero Carousel */}
+                      <HackathonCarousel
+                        opportunities={opportunities}
+                        onSelect={handleSelectOpportunity}
+                      />
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {opportunities.map((opp) => (
-                          <OpportunityCard
-                            key={opp.id}
-                            opportunity={opp}
-                            onSelect={handleSelectOpportunity}
-                            isBookmarked={bookmarkedIds.has(opp.id)}
-                            onToggleBookmark={handleToggleBookmark}
-                          />
+                      {/* 2. Category Navigation Tabs */}
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                        {categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                              selectedCategory === cat.id
+                                ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            {cat.label}
+                          </button>
                         ))}
                       </div>
+
+                      {/* 3. Comprehensive Faceted Filter Bar */}
+                      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-xs font-semibold text-slate-700">
+                        
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {/* Mode Filter */}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Mode:</span>
+                            <select
+                              value={selectedMode}
+                              onChange={(e) => setSelectedMode(e.target.value)}
+                              className="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-500 cursor-pointer"
+                            >
+                              <option value="all">All Modes</option>
+                              <option value="online">Online / Remote</option>
+                              <option value="in-person">In-Person</option>
+                              <option value="hybrid">Hybrid</option>
+                            </select>
+                          </div>
+
+                          {/* Verification Status */}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Status:</span>
+                            <select
+                              value={selectedStatus}
+                              onChange={(e) => setSelectedStatus(e.target.value)}
+                              className="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-500 cursor-pointer"
+                            >
+                              <option value="all">All Listings</option>
+                              <option value="VERIFIED_OFFICIAL">Verified Official Only</option>
+                              <option value="COMMUNITY_REPORTED">Community Verified</option>
+                            </select>
+                          </div>
+
+                          {/* Free Participation Only */}
+                          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={isFreeOnly}
+                              onChange={(e) => setIsFreeOnly(e.target.checked)}
+                              className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                            <span>Free Participation Only</span>
+                          </label>
+
+                          {/* Reset Filters button */}
+                          {isFilteringActive && (
+                            <button
+                              onClick={handleResetFilters}
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Reset</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Sort By Dropdown */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Sort By:</span>
+                          <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-500 cursor-pointer"
+                          >
+                            <option value="recommended">Personalized Match</option>
+                            <option value="deadline">Closing Soonest</option>
+                            <option value="prize">Highest Prize / Stipend</option>
+                            <option value="newest">Recently Discovered</option>
+                          </select>
+                        </div>
+
+                      </div>
+
+                      {/* 4. Opportunity Feed Grid */}
+                      {loading ? (
+                        <div className="py-20 text-center bg-white rounded-3xl border border-slate-200">
+                          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                          <p className="text-xs font-bold text-slate-600">Loading verified opportunities...</p>
+                        </div>
+                      ) : opportunities.length === 0 ? (
+                        <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8">
+                          <Compass className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                          <h3 className="text-base font-bold text-slate-800">No matching opportunities found</h3>
+                          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                            Try adjusting your filters or resetting them to view all opportunities.
+                          </p>
+                          <button
+                            onClick={handleResetFilters}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold cursor-pointer"
+                          >
+                            Reset All Filters
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex items-center justify-between mb-3 px-1">
+                            <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                              Verified Opportunities ({opportunities.length})
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-semibold">
+                              Click any card to open full details & AI prep
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {opportunities.map((opp) => (
+                              <OpportunityCard
+                                key={opp.id}
+                                opportunity={opp}
+                                onSelect={handleSelectOpportunity}
+                                isBookmarked={bookmarkedIds.has(opp.id)}
+                                onToggleBookmark={handleToggleBookmark}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   )}
 
@@ -365,12 +434,12 @@ export default function App() {
               )}
 
               {/* ========================================================= */}
-              {/* VIEW: MENTORSHIP (Unstop screenshot #2)                    */}
+              {/* VIEW: MENTORSHIP VIEW                                     */}
               {/* ========================================================= */}
               {activeTab === "mentorship" && <MentorshipView />}
 
               {/* ========================================================= */}
-              {/* VIEW: REDESIGNED APPLICATION TRACKER                      */}
+              {/* VIEW: APPLICATION TRACKER VIEW                           */}
               {/* ========================================================= */}
               {activeTab === "tracker" && (
                 <ApplicationTrackerView
@@ -382,7 +451,7 @@ export default function App() {
               )}
 
               {/* ========================================================= */}
-              {/* VIEW: AI PREP ZONE                                        */}
+              {/* VIEW: AI ASSISTANT / PREP VIEW                            */}
               {/* ========================================================= */}
               {activeTab === "ai_prep" && (
                 <AIAssistantView
@@ -392,12 +461,12 @@ export default function App() {
               )}
 
               {/* ========================================================= */}
-              {/* VIEW: ADMIN GOVERNANCE & VERIFICATION                     */}
+              {/* VIEW: ADMIN CONSOLE                                       */}
               {/* ========================================================= */}
               {activeTab === "admin" && <AdminView />}
 
               {/* ========================================================= */}
-              {/* VIEW: STUDENT PROFILE & PREFERENCES                       */}
+              {/* VIEW: STUDENT PROFILE                                     */}
               {/* ========================================================= */}
               {activeTab === "profile" && <ProfileView />}
 
